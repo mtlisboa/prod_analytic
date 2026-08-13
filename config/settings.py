@@ -4,6 +4,15 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+SECURE_SSL_REDIRECT = True
+SECURE_REDIRECT_EXEMPT = [
+    r"^health/$",
+]
+
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
