@@ -1,11 +1,24 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from .forms import TrainingRecordForm, TrainingSetFormSet
 from .models import TrainingRecord
+
+
+@login_required
+def search_exercises(request):
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"results": []})
+
+    exercises = request.user.exercises.filter(
+        active=True, name__icontains=query[:100]
+    ).values("id", "name", "muscle_group").order_by("name")[:20]
+    return JsonResponse({"results": list(exercises)})
 
 
 @login_required
