@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Forge{% endblock %}
+{% block content %}
+<header class="page-heading narrow">
+  <div><p class="eyebrow">{{ eyebrow }}</p><h1>{{ title }}</h1><p>Mantenha seu catálogo pessoal organizado para registrar os treinos mais rápido.</p></div>
+</header>
+<section class="panel form-panel narrow">
+  <form method="post" class="form-grid single">
+    {% csrf_token %}
+    {% include "manager/form_fields.html" %}
+    <div class="form-actions"><a class="button secondary" href="{% url 'academia:dashboard' %}">Cancelar</a><button class="button primary" type="submit">{{ submit_label }}</button></div>
+  </form>
+</section>
+{% endblock %}

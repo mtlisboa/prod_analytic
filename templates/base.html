@@ -1,0 +1,41 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11140f">
+  <title>{% block title %}Forge — Diário de treino{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  {% if user.is_authenticated %}
+  <header class="topbar">
+    <a class="brand" href="{% url 'academia:dashboard' %}" aria-label="Forge, início">
+      <span class="brand-mark">F</span><span>FORGE</span>
+    </a>
+    <nav class="nav" aria-label="Navegação principal">
+      <a href="{% url 'academia:dashboard' %}">Análise</a>
+      <a href="{% url 'academia:training_create' %}">Registrar treino</a>
+      <a href="{% url 'academia:exercise_create' %}">Exercícios</a>
+      <a href="{% url 'academia:technique_create' %}">Técnicas</a>
+    </nav>
+    <form method="post" action="{% url 'manager:logout' %}">{% csrf_token %}<button class="text-button" type="submit">Sair</button></form>
+  </header>
+  {% endif %}
+
+  {% if messages %}
+  <div class="messages" aria-live="polite">
+    {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="{% block main_class %}page-shell{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

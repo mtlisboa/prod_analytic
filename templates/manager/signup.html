@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Criar conta — Forge{% endblock %}
+{% block main_class %}auth-shell{% endblock %}
+{% block content %}
+<section class="auth-intro">
+  <span class="brand auth-brand"><span class="brand-mark">F</span><span>FORGE</span></span>
+  <p class="eyebrow">Seu próximo capítulo</p>
+  <h1>Consistência<br><em>vira força.</em></h1>
+  <p class="auth-copy">Um espaço privado para registrar cada série e enxergar sua evolução.</p>
+  <div class="decor-line"></div>
+</section>
+<section class="auth-card">
+  <div><p class="eyebrow">Comece agora</p><h2>Crie sua conta</h2></div>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {% include "manager/form_fields.html" %}
+    <button class="button primary full" type="submit">Criar conta <span aria-hidden="true">→</span></button>
+  </form>
+  <p class="auth-switch">Já tem conta? <a href="{% url 'manager:login' %}">Entrar</a></p>
+</section>
+{% endblock %}

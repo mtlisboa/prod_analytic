@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Análise — Forge{% endblock %}
+{% block content %}
+<header class="page-heading">
+  <div><p class="eyebrow">Visão de performance</p><h1>Olá, {{ user.username }}.</h1><p>Consistência transformada em dados claros.</p></div>
+  <a class="button primary" href="{% url 'academia:training_create' %}">+ Registrar treino</a>
+</header>
+
+<section class="stats-grid" aria-label="Resumo de hoje">
+  <article class="stat-card accent"><span>Séries hoje</span><strong>{{ today_totals.sets|default:0 }}</strong><small>repetições de esforço</small></article>
+  <article class="stat-card"><span>Execução hoje</span><strong>{% widthratio today_totals.execution|default:0 60 1 %}<sup> min</sup></strong><small>tempo sob tensão</small></article>
+  <article class="stat-card"><span>Descanso hoje</span><strong>{% widthratio today_totals.rest|default:0 60 1 %}<sup> min</sup></strong><small>recuperação acumulada</small></article>
+  <article class="stat-card"><span>Registros totais</span><strong>{{ total_records }}</strong><small>exercícios concluídos</small></article>
+</section>
+
+<section class="analysis-layout">
+  <article class="panel chart-panel">
+    <div class="panel-heading"><div><p class="eyebrow">Evolução</p><h2>{{ metric.label }}</h2></div><span class="unit-chip">{{ metric.unit }}</span></div>
+    {% if rows %}
+      <div class="chart-wrap"><canvas id="productivity-chart" aria-label="Gráfico de linha de {{ metric.label }}" role="img"></canvas></div>
+    {% else %}
+      <div class="empty-state"><span>↗</span><h3>Sem dados neste período</h3><p>Registre um treino ou amplie o intervalo do filtro.</p></div>
+    {% endif %}
+  </article>
+
+  <aside class="panel filters-panel">
+    <div class="panel-heading"><div><p class="eyebrow">Refinar</p><h2>Filtros</h2></div></div>
+    <form method="get" class="stack-form compact">
+      {% for field in filter_form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}
+      <button class="button primary full" type="submit">Aplicar filtros</button>
+    </form>
+  </aside>
+</section>
+
+<section class="panel table-panel">
+  <div class="panel-heading"><div><p class="eyebrow">Detalhamento</p><h2>Produtividade por período</h2></div></div>
+  <div class="table-scroll">
+    <table><thead><tr><th>Período</th><th>{{ metric.label }}</th><th>Registros</th></tr></thead>
+    <tbody>{% for row in rows %}<tr><td>{{ row.label }}</td><td><strong>{{ row.value }}</strong> {{ metric.unit }}</td><td>{{ row.records }}</td></tr>{% empty %}<tr><td colspan="3">Nenhum dado encontrado.</td></tr>{% endfor %}</tbody></table>
+  </div>
+</section>
+
+<section class="panel table-panel recent-panel">
+  <div class="panel-heading"><div><p class="eyebrow">Histórico</p><h2>Últimos registros</h2></div></div>
+  <div class="table-scroll">
+    <table><thead><tr><th>Data</th><th>Exercício</th><th>Séries</th><th>Peso/série</th><th>Técnica</th></tr></thead>
+    <tbody>{% for record in recent_records %}<tr><td>{{ record.performed_at|date:"d/m/Y H:i" }}</td><td><strong>{{ record.exercise.name }}</strong></td><td>{{ record.set_total }}</td><td>{{ record.avg_weight|floatformat:2 }} kg</td><td>{% for item in record.sets.all %}{% if item.advanced_technique %}{{ item.advanced_technique.name }}{% if not forloop.last %}, {% endif %}{% endif %}{% empty %}—{% endfor %}</td></tr>{% empty %}<tr><td colspan="5">Seu histórico aparecerá aqui.</td></tr>{% endfor %}</tbody></table>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+{% if rows %}<script>window.FORGE_CHART={labels:{{ chart_labels|safe }},values:{{ chart_values|safe }},unit:"{{ metric.unit|escapejs }}"};</script><script src="{% static 'js/chart.js' %}"></script>{% endif %}
+{% endblock %}

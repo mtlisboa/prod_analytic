@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Entrar — Forge{% endblock %}
+{% block main_class %}auth-shell{% endblock %}
+{% block content %}
+<section class="auth-intro">
+  <span class="brand auth-brand"><span class="brand-mark">F</span><span>FORGE</span></span>
+  <p class="eyebrow">Diário de performance</p>
+  <h1>Treine. Registre.<br><em>Evolua.</em></h1>
+  <p class="auth-copy">Seus números contam a história que o espelho demora a mostrar.</p>
+  <div class="decor-line"></div>
+</section>
+<section class="auth-card">
+  <div>
+    <p class="eyebrow">Bem-vindo de volta</p>
+    <h2>Entre na sua conta</h2>
+  </div>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {% include "manager/form_fields.html" %}
+    {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+    <button class="button primary full" type="submit">Entrar <span aria-hidden="true">→</span></button>
+  </form>
+  <p class="auth-switch">Primeiro acesso? <a href="{% url 'manager:signup' %}">Criar conta única</a></p>
+</section>
+{% endblock %}
