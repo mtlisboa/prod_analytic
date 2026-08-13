@@ -59,6 +59,23 @@ class AcademiaFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(TrainingRecord.objects.exists())
 
+    def test_exercise_search_filters_in_database_and_by_user(self):
+        Exercise.objects.create(user=self.user, name="Supino inclinado", muscle_group="chest")
+        Exercise.objects.create(user=self.user, name="Agachamento", muscle_group="legs")
+        Exercise.objects.create(user=self.other, name="Supino privado", muscle_group="chest")
+
+        response = self.client.get(reverse("academia:exercise_search"), {"q": "supino"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["name"] for item in response.json()["results"]],
+            ["Supino", "Supino inclinado"],
+        )
+
+    def test_exercise_search_does_not_return_everything_for_empty_query(self):
+        response = self.client.get(reverse("academia:exercise_search"), {"q": ""})
+        self.assertEqual(response.json(), {"results": []})
+
 
 class SingleUserRegistrationTests(TestCase):
     def test_signup_creates_the_first_account(self):

@@ -9,7 +9,16 @@
 <section class="panel form-panel">
   <form method="post" id="training-form">
     {% csrf_token %}
-    <div class="field exercise-field"><label for="{{ form.exercise.id_for_label }}">{{ form.exercise.label }}</label>{{ form.exercise }}{% for error in form.exercise.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    <div class="field exercise-field" data-exercise-search-url="{% url 'academia:exercise_search' %}">
+      <label for="exercise-search">{{ form.exercise.label }}</label>
+      {{ form.exercise }}
+      <div class="exercise-combobox">
+        <input id="exercise-search" type="search" autocomplete="off" placeholder="Digite para buscar um exercício" aria-autocomplete="list" aria-controls="exercise-results" aria-expanded="false" required>
+        <div id="exercise-results" class="exercise-results" role="listbox" hidden></div>
+      </div>
+      <small>Digite parte do nome para pesquisar.</small>
+      {% for error in form.exercise.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </div>
     {{ formset.management_form }}
     {% if formset.non_form_errors %}<div class="field-error formset-error">{{ formset.non_form_errors }}</div>{% endif %}
     <div class="sets-heading"><div><p class="eyebrow">Detalhamento</p><h2>Séries</h2></div><button class="button secondary" id="add-set" type="button">+ Adicionar série</button></div>
@@ -31,4 +40,4 @@
 </section>
 <dialog id="set-modal" class="set-modal"><div class="modal-heading"><div><p class="eyebrow">Editar detalhes</p><h2 id="modal-title">Série</h2></div><button type="button" class="modal-close" aria-label="Fechar">×</button></div><div id="modal-fields" class="form-grid"></div><div class="form-actions"><button class="button secondary modal-cancel" type="button">Cancelar</button><button class="button primary modal-save" type="button">Salvar série</button></div></dialog>
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/training-controls.js' %}"></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/exercise-search.js' %}"></script><script src="{% static 'js/training-controls.js' %}"></script>{% endblock %}

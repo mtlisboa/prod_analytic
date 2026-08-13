@@ -4,15 +4,25 @@ from django.forms import inlineformset_factory
 from .models import TrainingRecord, TrainingSet
 
 
+class ExerciseSearchSelect(forms.Select):
+    def use_required_attribute(self, initial):
+        return False
+
+
 class TrainingRecordForm(forms.ModelForm):
     class Meta:
         model = TrainingRecord
         fields = ("exercise",)
+        widgets = {"exercise": ExerciseSearchSelect()}
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
-        self.fields["exercise"].queryset = user.exercises.filter(active=True)
+        exercise_id = self.data.get("exercise") if self.is_bound else self.initial.get("exercise")
+        if not exercise_id and self.instance and self.instance.exercise_id:
+            exercise_id = self.instance.exercise_id
+        self.fields["exercise"].queryset = user.exercises.filter(active=True, pk=exercise_id)
+        self.fields["exercise"].widget.attrs["class"] = "exercise-native-select"
 
     def clean_exercise(self):
         exercise = self.cleaned_data["exercise"]
