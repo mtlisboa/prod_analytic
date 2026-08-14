@@ -10,6 +10,7 @@ def health(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", health, name="health"),
+    path("api/analytics/graphql/", include("contexts.academia.features.analytics_graphql.urls")),
     path("", include("contexts.manager.urls")),
     path("academia/", include("contexts.academia.urls")),
 ]

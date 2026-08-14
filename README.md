@@ -12,8 +12,11 @@ contexts/
 └── academia/features/
     ├── catalog/                       # exercícios e técnicas avançadas
     ├── training/                      # registros de treino
-    └── analytics/                     # filtros, agregação, tabela e gráfico
+    ├── analytics/                     # painel e resumo de análise
+    └── analytics_graphql/             # API GraphQL analítica e documentação
 ```
+
+A API de análise está disponível em `/api/analytics/graphql/`. O catálogo completo de consultas, campos, funções e exemplos fica em `contexts/academia/features/analytics_graphql/README.md`.
 
 Cada feature concentra seus próprios `forms`, `views`, `urls` e serviços. `contexts/academia/models.py` apenas expõe os modelos para o mecanismo de descoberta do Django.
 
