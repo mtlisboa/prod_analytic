@@ -1,6 +1,7 @@
 (() => {
   const NS = "http://www.w3.org/2000/svg";
   const palette = ["#769d17", "#3969ac", "#da7c30", "#7a4eab", "#c43d4b", "#16837a", "#b05b91", "#697079"];
+  const observers = new WeakMap();
   const tooltip = document.createElement("div");
   tooltip.className = "chart-tooltip";
   tooltip.hidden = true;
@@ -143,14 +144,19 @@
   }
 
   function mountChart(container, data) {
-    if (!container || !data) return;
+    if (!container) return;
+    observers.get(container)?.disconnect();
+    container.replaceChildren();
+    if (!data?.series?.some((series) => series.points.length)) return;
     renderChart(container, data);
     if (window.ResizeObserver) {
       let frame;
-      new ResizeObserver(() => {
+      const observer = new ResizeObserver(() => {
         cancelAnimationFrame(frame);
         frame = requestAnimationFrame(() => renderChart(container, data));
-      }).observe(container);
+      });
+      observer.observe(container);
+      observers.set(container, observer);
     }
   }
 
@@ -160,16 +166,5 @@
     });
   });
 
-  const time = window.FORGE_CHART;
-  if (time) {
-    mountChart(document.getElementById("productivity-chart"), {
-      x: {label: "Tempo", unit: "", kind: "category"},
-      y: {label: "Valores", unit: "", kind: "number"},
-      series: time.series.map((series) => ({
-        label: series.label,
-        points: time.labels.map((label, index) => ({x: label, y: series.values[index]})),
-      })),
-    });
-  }
-  mountChart(document.getElementById("relation-chart"), window.FORGE_RELATION_CHART);
+  window.FORGE_CHARTS = {mount: mountChart, palette};
 })();

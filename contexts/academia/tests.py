@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 
 from django.contrib.auth.models import User
@@ -39,61 +40,95 @@ class AcademiaFlowTests(TestCase):
         self.assertContains(response, 'id="set-modal"')
         self.assertContains(response, 'name="sets-2-rest_time_seconds"')
 
-    def test_dashboard_filters_and_aggregates(self):
-        record = TrainingRecord.objects.create(user=self.user, exercise=self.exercise)
-        TrainingSet.objects.create(training_record=record, position=1, performed_at=timezone.now(), weight_kg=80, execution_time_seconds=40, rest_time_seconds=60)
-        TrainingSet.objects.create(training_record=record, position=2, performed_at=timezone.now(), weight_kg=80, execution_time_seconds=40, rest_time_seconds=90)
-        today = timezone.localdate().isoformat()
-        response = self.client.get(reverse("academia:dashboard"), {"start_date": today, "end_date": today, "period": "daily", "metric": "rest_per_set", "technique": ""})
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "75.0")
+    def _graphql(self, query, variables=None):
+        return self.client.post(
+            reverse("analytics_graphql:endpoint"),
+            data=json.dumps({"query": query, "variables": variables or {}}),
+            content_type="application/json",
+        )
 
-    def test_dashboard_accepts_multiple_time_metrics_and_custom_axes(self):
+    def test_dashboard_loads_the_graphql_analysis_builder(self):
+        response = self.client.get(reverse("academia:dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("analytics_graphql:endpoint"))
+        self.assertContains(response, 'id="analysis-fields"')
+        self.assertContains(response, 'id="x-function"')
+        self.assertContains(response, 'id="y-function"')
+
+    def test_graphql_endpoint_requires_authentication(self):
+        self.client.logout()
+        response = self._graphql("query { analysisFields { key } }")
+        self.assertEqual(response.status_code, 302)
+
+    def test_graphql_lists_fields_and_only_the_users_catalog(self):
+        Exercise.objects.create(user=self.other, name="Privado", muscle_group="legs")
+        response = self._graphql("""
+            query { analysisFields { key label supportedFunctions { key } }
+                    analysisCatalog { exercises { id name } techniques { id name } } }
+        """)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertIn("WEIGHT", [item["key"] for item in data["analysisFields"]])
+        self.assertEqual([item["name"] for item in data["analysisCatalog"]["exercises"]], ["Supino"])
+
+    def test_graphql_time_analysis_accepts_multiple_lines_and_classes(self):
+        record = TrainingRecord.objects.create(user=self.user, exercise=self.exercise)
+        TrainingSet.objects.create(
+            training_record=record, position=1, performed_at=timezone.now(),
+            weight_kg=80, execution_time_seconds=40, rest_time_seconds=60,
+            advanced_technique=self.technique,
+        )
+        TrainingSet.objects.create(
+            training_record=record, position=2, performed_at=timezone.now(),
+            weight_kg=90, execution_time_seconds=42, rest_time_seconds=90,
+            advanced_technique=self.technique,
+        )
+        today = timezone.localdate().isoformat()
+        response = self._graphql("""
+            query($input: TimeAnalysisInput!) {
+              timeAnalysis(input: $input) { series { label points { x y } } }
+            }
+        """, {"input": {
+            "startDate": today, "endDate": today, "period": "DAILY",
+            "lines": [
+                {"field": "WEIGHT", "function": "AVG"},
+                {"field": "REST", "function": "SUM"}
+            ],
+            "groupBy": ["EXERCISE", "TECHNIQUE"],
+            "exerciseIds": [], "techniqueId": None,
+        }})
+        self.assertEqual(response.status_code, 200)
+        series = response.json()["data"]["timeAnalysis"]["series"]
+        self.assertEqual([item["label"] for item in series], [
+            "Média de Força / carga · Supino · Drop set",
+            "Soma de Tempo de descanso · Supino · Drop set",
+        ])
+        self.assertEqual([item["points"][0]["y"] for item in series], [85.0, 150.0])
+
+    def test_graphql_comparison_has_independent_axis_functions(self):
         record = TrainingRecord.objects.create(user=self.user, exercise=self.exercise)
         TrainingSet.objects.create(
             training_record=record, position=1, performed_at=timezone.now(),
             weight_kg=80, execution_time_seconds=40, rest_time_seconds=60,
         )
         today = timezone.localdate().isoformat()
-        response = self.client.get(reverse("academia:dashboard"), {
-            "start_date": today,
-            "end_date": today,
-            "period": "daily",
-            "metrics": ["sets", "weight_per_set"],
-            "exercises": [self.exercise.pk],
-            "x_axis": "set_position",
-            "y_axis": "weight",
-            "group_by": "exercise",
-            "technique": "",
-        })
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            [item["key"] for item in response.context["chart_series"]],
-            [f"sets-{self.exercise.pk}", f"weight_per_set-{self.exercise.pk}"],
-        )
-        self.assertContains(response, "Força / carga em função de Número da série")
-        self.assertContains(response, '"x": 1, "y": 80.0')
-        self.assertEqual(response.context["comparison"]["series"][0]["label"], "Supino")
-
-    def test_dynamic_chart_accepts_categories_on_either_axis(self):
-        record = TrainingRecord.objects.create(user=self.user, exercise=self.exercise)
-        TrainingSet.objects.create(
-            training_record=record, position=1, performed_at=timezone.now(),
-            weight_kg=80, execution_time_seconds=40, rest_time_seconds=60,
-        )
-        today = timezone.localdate().isoformat()
-        response = self.client.get(reverse("academia:dashboard"), {
-            "start_date": today, "end_date": today, "period": "daily",
-            "metrics": ["sets"], "exercises": [self.exercise.pk],
-            "x_axis": "weight", "y_axis": "exercise", "group_by": "",
-            "technique": "",
-        })
-
-        comparison = response.context["comparison"]
+        response = self._graphql("""
+            query($input: ComparisonAnalysisInput!) {
+              comparisonAnalysis(input: $input) {
+                x { label kind } y { label kind }
+                series { label points { x y } }
+              }
+            }
+        """, {"input": {
+            "startDate": today, "endDate": today,
+            "x": {"field": "SET_POSITION", "function": "RAW"},
+            "y": {"field": "WEIGHT", "function": "AVG"},
+            "groupBy": ["EXERCISE"], "exerciseIds": [], "techniqueId": None,
+        }})
+        comparison = response.json()["data"]["comparisonAnalysis"]
         self.assertEqual(comparison["x"]["kind"], "number")
-        self.assertEqual(comparison["y"]["kind"], "category")
-        self.assertEqual(comparison["series"][0]["points"], [{"x": 80.0, "y": "Supino"}])
+        self.assertEqual(comparison["y"]["label"], "Média de Força / carga")
+        self.assertEqual(comparison["series"], [{"label": "Supino", "points": [{"x": 1, "y": 80.0}]}])
 
     def test_user_cannot_select_another_users_exercise(self):
         private_exercise = Exercise.objects.create(user=self.other, name="Agachamento", muscle_group="legs")

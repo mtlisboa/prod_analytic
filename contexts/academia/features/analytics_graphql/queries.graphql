@@ -1,0 +1,30 @@
+query AnalysisBuilderMetadata {
+  analysisFields {
+    key
+    label
+    kind
+    unit
+    groupable
+    supportedFunctions { key label }
+  }
+  analysisCatalog {
+    exercises { id name }
+    techniques { id name }
+  }
+}
+
+query TimeAnalysis($input: TimeAnalysisInput!) {
+  timeAnalysis(input: $input) {
+    x { label unit kind }
+    y { label unit kind }
+    series { label points { x y } }
+  }
+}
+
+query ComparisonAnalysis($input: ComparisonAnalysisInput!) {
+  comparisonAnalysis(input: $input) {
+    x { label unit kind }
+    y { label unit kind }
+    series { label points { x y } }
+  }
+}

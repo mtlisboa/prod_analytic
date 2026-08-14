@@ -14,42 +14,47 @@
   <article class="stat-card"><span>Registros totais</span><strong>{{ total_records }}</strong><small>exercícios concluídos</small></article>
 </section>
 
-<section class="analysis-layout">
-  <article class="panel chart-panel">
-    <div class="panel-heading"><div><p class="eyebrow">Evolução</p><h2>Variáveis ao longo do tempo</h2></div><span class="unit-chip">Eixo X: tempo</span></div>
-    {% if rows %}
-      <div class="chart-legend">{% for item in chart_series %}<span data-series-color="{{ forloop.counter0 }}">{{ item.label }} ({{ item.unit }})</span>{% endfor %}</div>
-      <div class="chart-wrap"><div id="productivity-chart" class="line-chart" aria-label="Gráfico temporal com as variáveis selecionadas" role="img"></div></div>
-    {% else %}
-      <div class="empty-state"><span>↗</span><h3>Sem dados neste período</h3><p>Registre um treino ou amplie o intervalo do filtro.</p></div>
-    {% endif %}
-  </article>
+<section class="panel analytics-builder" id="analytics-builder">
+  <div class="panel-heading"><div><p class="eyebrow">Campos disponíveis</p><h2>Construtor de análise</h2></div><span class="unit-chip">GraphQL</span></div>
+  <div id="analysis-status" class="analysis-status">Carregando campos da API…</div>
+  <div id="analysis-fields" class="analysis-fields" aria-label="Lista de campos analíticos"></div>
+  <form id="analysis-form" hidden>
+    <div class="builder-grid shared-filters">
+      <div class="field"><label for="analysis-start">De</label><input id="analysis-start" type="date" required></div>
+      <div class="field"><label for="analysis-end">Até</label><input id="analysis-end" type="date" required></div>
+      <div class="field"><label for="analysis-exercises">Filtrar exercícios</label><select id="analysis-exercises" multiple></select><small>Deixe vazio para considerar todos.</small></div>
+      <div class="field"><label for="analysis-technique">Filtrar técnica</label><select id="analysis-technique"><option value="">Todas</option></select></div>
+    </div>
 
-  <aside class="panel filters-panel">
-    <div class="panel-heading"><div><p class="eyebrow">Refinar</p><h2>Filtros</h2></div></div>
-    <form method="get" class="stack-form compact">
-      {% for field in filter_form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}
-      <button class="button primary full" type="submit">Aplicar filtros</button>
-    </form>
-  </aside>
+    <div class="builder-section">
+      <div class="sets-heading"><div><p class="eyebrow">Gráfico superior</p><h2>Linhas ao longo do tempo</h2></div><button id="add-time-line" class="button secondary" type="button">+ Adicionar linha</button></div>
+      <div class="builder-grid compact-grid"><div class="field"><label for="time-period">Separação do tempo</label><select id="time-period"><option value="DAILY">Diária</option><option value="WEEKLY">Semanal</option><option value="MONTHLY">Mensal</option></select></div></div>
+      <div id="time-lines" class="axis-lines"></div>
+      <fieldset class="group-fields"><legend>Gerar linhas diferentes por classe</legend><div id="time-groups" class="checkbox-grid"></div></fieldset>
+    </div>
+
+    <div class="builder-section">
+      <div><p class="eyebrow">Gráfico inferior</p><h2>Comparação entre X e Y</h2></div>
+      <div class="builder-grid axis-builder-grid">
+        <div class="axis-builder"><strong>Eixo X</strong><div class="field"><label for="x-field">Campo</label><select id="x-field"></select></div><div class="field"><label for="x-function">Função</label><select id="x-function"></select></div></div>
+        <div class="axis-builder"><strong>Eixo Y</strong><div class="field"><label for="y-field">Campo</label><select id="y-field"></select></div><div class="field"><label for="y-function">Função</label><select id="y-function"></select></div></div>
+      </div>
+      <fieldset class="group-fields"><legend>Agregar classes em linhas diferentes</legend><div id="comparison-groups" class="checkbox-grid"></div></fieldset>
+    </div>
+    <div class="form-actions"><button class="button primary" type="submit">Executar análise</button></div>
+  </form>
+</section>
+
+<section class="panel chart-panel analysis-chart-panel">
+  <div class="panel-heading"><div><p class="eyebrow">Evolução</p><h2>Variáveis ao longo do tempo</h2></div><span class="unit-chip">X: tempo</span></div>
+  <div id="time-chart-legend" class="chart-legend"></div>
+  <div class="chart-wrap"><div id="productivity-chart" class="line-chart" role="img"></div><div id="time-chart-empty" class="empty-state chart-overlay">Execute uma consulta para visualizar o gráfico.</div></div>
 </section>
 
 <section class="panel chart-panel relation-panel">
-  <div class="panel-heading"><div><p class="eyebrow">Comparação dinâmica</p><h2>{{ y_axis.label }} em função de {{ x_axis.label }}</h2></div><span class="unit-chip">X e Y configuráveis</span></div>
-  {% if comparison.series %}
-    <div class="chart-legend">{% for item in comparison.series %}<span data-series-color="{{ forloop.counter0 }}">{{ item.label }}</span>{% endfor %}</div>
-    <div class="chart-wrap"><div id="relation-chart" class="line-chart" aria-label="{{ y_axis.label }} em função de {{ x_axis.label }}" role="img"></div></div>
-  {% else %}
-    <div class="empty-state"><span>↗</span><h3>Sem dados neste período</h3><p>Registre um treino ou amplie o intervalo do filtro.</p></div>
-  {% endif %}
-</section>
-
-<section class="panel table-panel">
-  <div class="panel-heading"><div><p class="eyebrow">Detalhamento</p><h2>Produtividade por período</h2></div></div>
-  <div class="table-scroll">
-    <table><thead><tr><th>Período</th>{% for item in chart_series %}<th>{{ item.label }} ({{ item.unit }})</th>{% endfor %}</tr></thead>
-    <tbody>{% for row in rows %}<tr><td>{{ row.label }}</td>{% for value in row.values %}<td><strong>{{ value }}</strong></td>{% endfor %}</tr>{% empty %}<tr><td colspan="6">Nenhum dado encontrado.</td></tr>{% endfor %}</tbody></table>
-  </div>
+  <div class="panel-heading"><div><p class="eyebrow">Comparação dinâmica</p><h2 id="comparison-title">Eixo Y em função do eixo X</h2></div><span class="unit-chip">X e Y configuráveis</span></div>
+  <div id="comparison-chart-legend" class="chart-legend"></div>
+  <div class="chart-wrap"><div id="relation-chart" class="line-chart" role="img"></div><div id="comparison-chart-empty" class="empty-state chart-overlay">Execute uma consulta para visualizar o gráfico.</div></div>
 </section>
 
 <section class="panel table-panel recent-panel">
@@ -61,5 +66,7 @@
 </section>
 {% endblock %}
 {% block scripts %}
-{% if rows %}<script>window.FORGE_CHART={{ chart_data|safe }};window.FORGE_RELATION_CHART={{ relation_data|safe }};</script><script src="{% static 'js/chart.js' %}"></script>{% endif %}
+<script>window.FORGE_ANALYTICS={{ analysis_config|safe }};</script>
+<script src="{% static 'js/chart.js' %}"></script>
+<script src="{% static 'js/analytics-builder.js' %}"></script>
 {% endblock %}
