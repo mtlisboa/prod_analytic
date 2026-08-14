@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Registrar treino — Forge{% endblock %}
+{% block title %}{% if editing %}Editar treino{% else %}Registrar treino{% endif %} — Forge{% endblock %}
 {% block content %}
 <header class="page-heading">
-  <div><p class="eyebrow">Novo registro</p><h1>Como foi o treino?</h1><p>Escolha o exercício e registre execução, descanso e carga em cada série.</p></div>
+  <div><p class="eyebrow">{% if editing %}Editar registro{% else %}Novo registro{% endif %}</p><h1>{% if editing %}Editar treino{% else %}Como foi o treino?{% endif %}</h1><p>Escolha o exercício e registre execução, descanso e carga em cada série.</p></div>
   <div class="heading-actions"><a class="button secondary" href="{% url 'academia:exercise_create' %}">+ Exercício</a><a class="button secondary" href="{% url 'academia:technique_create' %}">+ Técnica</a></div>
 </header>
 <section class="panel form-panel">
@@ -35,7 +35,7 @@
       {% endfor %}
     </div>
     <template id="empty-set-template"><article class="set-card" data-set-form><div><span class="set-number">Nova série</span><strong data-summary>Preencha os dados da série</strong></div><div class="set-actions"><button class="input-tool edit-set" type="button">Editar</button><button class="input-tool danger remove-set" type="button">Remover</button></div><div class="set-fields" hidden>{{ formset.empty_form.id }}{{ formset.empty_form.position }}{{ formset.empty_form.DELETE }}{% for field in formset.empty_form.visible_fields %}{% if field.name != "DELETE" %}<div class="field" data-field="{{ field.name }}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>{% endif %}{% endfor %}</div></article></template>
-    <div class="form-actions"><a class="button secondary" href="{% url 'academia:dashboard' %}">Cancelar</a><button class="button primary" type="submit">Registrar treino</button></div>
+    <div class="form-actions"><a class="button secondary" href="{% url 'academia:dashboard' %}">Cancelar</a><button class="button primary" type="submit">{% if editing %}Salvar alterações{% else %}Registrar treino{% endif %}</button></div>
   </form>
 </section>
 <dialog id="set-modal" class="set-modal"><div class="modal-heading"><div><p class="eyebrow">Editar detalhes</p><h2 id="modal-title">Série</h2></div><button type="button" class="modal-close" aria-label="Fechar">×</button></div><div id="modal-fields" class="form-grid"></div><div class="form-actions"><button class="button secondary modal-cancel" type="button">Cancelar</button><button class="button primary modal-save" type="button">Salvar série</button></div></dialog>

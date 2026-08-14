@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import TrainingRecordForm, TrainingSetFormSet
@@ -44,4 +44,35 @@ def create_training(request):
             formset.save()
         messages.success(request, "Treino registrado com sucesso.")
         return redirect("academia:dashboard")
-    return render(request, "academia/training_form.html", {"form": form, "formset": formset})
+    return render(request, "academia/training_form.html", {"form": form, "formset": formset, "editing": False})
+
+
+@login_required
+def update_training(request, pk):
+    record = get_object_or_404(TrainingRecord, pk=pk, user=request.user)
+    form = TrainingRecordForm(request.POST or None, instance=record, user=request.user)
+    formset = TrainingSetFormSet(
+        request.POST or None, instance=record, prefix="sets",
+        form_kwargs={"user": request.user},
+    )
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        with transaction.atomic():
+            form.save()
+            formset.save()
+        messages.success(request, "Treino atualizado com sucesso.")
+        return redirect("academia:dashboard")
+    return render(request, "academia/training_form.html", {
+        "form": form, "formset": formset, "editing": True, "record": record,
+    })
+
+
+@login_required
+def delete_training(request, pk):
+    record = get_object_or_404(TrainingRecord, pk=pk, user=request.user)
+    if request.method == "POST":
+        record.delete()
+        messages.success(request, "Treino excluído.")
+        return redirect("academia:dashboard")
+    return render(request, "academia/confirm_delete.html", {
+        "object": record, "object_type": "treino", "cancel_url": "academia:dashboard",
+    })

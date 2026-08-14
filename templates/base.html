@@ -20,8 +20,8 @@
     <nav class="nav" aria-label="Navegação principal">
       <a href="{% url 'academia:dashboard' %}">Análise</a>
       <a href="{% url 'academia:training_create' %}">Registrar treino</a>
-      <a href="{% url 'academia:exercise_create' %}">Exercícios</a>
-      <a href="{% url 'academia:technique_create' %}">Técnicas</a>
+      <a href="{% url 'academia:exercise_list' %}">Exercícios</a>
+      <a href="{% url 'academia:technique_list' %}">Técnicas</a>
     </nav>
     <form method="post" action="{% url 'manager:logout' %}">{% csrf_token %}<button class="text-button" type="submit">Sair</button></form>
   </header>

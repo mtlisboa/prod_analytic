@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Forge{% endblock %}
+{% block content %}
+<header class="page-heading">
+  <div><p class="eyebrow">Catálogo</p><h1>{{ title }}</h1><p>Gerencie os itens usados nos seus registros de treino.</p></div>
+  <a class="button primary" href="{% url create_url %}">+ Adicionar</a>
+</header>
+<section class="panel table-panel">
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Nome</th><th>Detalhes</th><th>Ações</th></tr></thead>
+      <tbody>
+      {% for item in items %}
+        <tr>
+          <td><strong>{{ item.name }}</strong></td>
+          <td>{% if kind == "exercise" %}{{ item.get_muscle_group_display }}{% else %}{{ item.description|default:"—" }}{% endif %}</td>
+          <td class="row-actions">
+            {% if kind == "exercise" %}
+              <a class="input-tool" href="{% url 'academia:exercise_update' item.pk %}">Editar</a>
+              <a class="input-tool danger" href="{% url 'academia:exercise_delete' item.pk %}">Excluir</a>
+            {% else %}
+              <a class="input-tool" href="{% url 'academia:technique_update' item.pk %}">Editar</a>
+              <a class="input-tool danger" href="{% url 'academia:technique_delete' item.pk %}">Excluir</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}<tr><td colspan="3">Nenhum item cadastrado.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
