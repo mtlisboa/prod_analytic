@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Excluir {{ object_type }} — Forge{% endblock %}
+{% block content %}
+<header class="page-heading narrow">
+  <div><p class="eyebrow">Confirmação</p><h1>Excluir {{ object_type }}?</h1><p>Você está prestes a excluir <strong>{{ object }}</strong>. Esta ação não pode ser desfeita.</p></div>
+</header>
+<section class="panel form-panel narrow">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <a class="button secondary" href="{% url cancel_url %}">Cancelar</a>
+      <button class="button danger-button" type="submit">Excluir definitivamente</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
