@@ -45,7 +45,14 @@
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({query, variables}),
     });
-    const payload = await response.json();
+
+    let payload;
+    try {
+      payload = await response.json();
+    } catch (_error) {
+      throw new Error(`A API de análise retornou uma resposta inválida (HTTP ${response.status}).`);
+    }
+
     if (!response.ok || payload.errors?.length) {
       throw new Error(payload.errors?.map((error) => error.message).join(" ") || `Erro HTTP ${response.status}`);
     }
@@ -127,7 +134,8 @@
   }
 
   function selectedExerciseIds() {
-    return [...exerciseInput.selectedOptions].map((item) => item.value);
+    const ids = [...exerciseInput.selectedOptions].map((item) => item.value);
+    return ids.length ? ids : null;
   }
 
   function lineInputs() {
@@ -156,6 +164,10 @@
   }
 
   async function runAnalysis() {
+    if (!startInput.value || !endInput.value) {
+      throw new Error("Informe o período da análise.");
+    }
+
     status.textContent = "Executando consultas GraphQL…";
     status.classList.remove("error");
     const xField = document.getElementById("x-field");
@@ -238,6 +250,7 @@
     try {
       await runAnalysis();
     } catch (error) {
+      console.error("Erro ao executar análise", error);
       status.textContent = `Erro na consulta: ${error.message}`;
       status.classList.add("error");
     }
