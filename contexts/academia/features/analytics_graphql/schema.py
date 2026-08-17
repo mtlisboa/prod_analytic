@@ -76,7 +76,7 @@ class TimeAnalysisInput:
     period: TimePeriod
     lines: list[AxisInput]
     group_by: list[AnalyticsField] = strawberry.field(default_factory=list)
-    exercise_ids: list[strawberry.ID] = strawberry.field(default_factory=list)
+    exercise_ids: list[strawberry.ID] | None = None
     technique_id: strawberry.ID | None = None
 
 
@@ -87,7 +87,7 @@ class ComparisonAnalysisInput:
     x: AxisInput
     y: AxisInput
     group_by: list[AnalyticsField] = strawberry.field(default_factory=list)
-    exercise_ids: list[strawberry.ID] = strawberry.field(default_factory=list)
+    exercise_ids: list[strawberry.ID] | None = None
     technique_id: strawberry.ID | None = None
 
 
@@ -106,6 +106,12 @@ def _chart_result(payload: dict[str, Any]) -> ChartResult:
             for item in payload["series"]
         ],
     )
+
+
+def _exercise_ids(values: list[strawberry.ID] | None) -> list[int] | None:
+    if not values:
+        return None
+    return [int(value) for value in values]
 
 
 @strawberry.type
@@ -135,7 +141,7 @@ class Query:
         payload = build_time_analysis(
             user=_user(info), start_date=input.start_date, end_date=input.end_date,
             period=input.period, lines=input.lines, group_by=input.group_by,
-            exercise_ids=[int(value) for value in input.exercise_ids],
+            exercise_ids=_exercise_ids(input.exercise_ids),
             technique_id=int(input.technique_id) if input.technique_id else None,
         )
         return _chart_result(payload)
@@ -145,7 +151,7 @@ class Query:
         payload = build_comparison_analysis(
             user=_user(info), start_date=input.start_date, end_date=input.end_date,
             x=input.x, y=input.y, group_by=input.group_by,
-            exercise_ids=[int(value) for value in input.exercise_ids],
+            exercise_ids=_exercise_ids(input.exercise_ids),
             technique_id=int(input.technique_id) if input.technique_id else None,
         )
         return _chart_result(payload)
