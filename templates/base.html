@@ -5,6 +5,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11140f">
+  <script>
+    (function () {
+      var savedTheme = localStorage.getItem('forge-theme');
+      document.documentElement.dataset.theme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    }());
+  </script>
   <title>{% block title %}Forge — Diário de treino{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +18,10 @@
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body>
+  <button class="theme-toggle" type="button" aria-label="Ativar tema escuro" aria-pressed="false">
+    <span class="theme-toggle-icon" aria-hidden="true"></span>
+    <span class="theme-toggle-label">Tema escuro</span>
+  </button>
   {% if user.is_authenticated %}
   <header class="topbar">
     <a class="brand" href="{% url 'academia:dashboard' %}" aria-label="Forge, início">
@@ -37,5 +47,6 @@
     {% block content %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}
+  <script src="{% static 'js/theme.js' %}"></script>
 </body>
 </html>
