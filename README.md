@@ -1,6 +1,6 @@
 # Forge — diário de treino
 
-Aplicação pessoal em Django para registrar exercícios, técnicas avançadas e treinos, com análise diária, semanal e mensal em tabela e gráfico de linha.
+Aplicação pessoal em Django com contextos de Academia e Simulados. Permite registrar exercícios, técnicas avançadas e treinos, além de provas com resultados, tempo total, intervalos, link e impressões.
 
 ## Arquitetura
 
@@ -9,11 +9,12 @@ O projeto usa MVC do Django (templates fazem o papel de View) organizado por con
 ```text
 contexts/
 ├── manager/features/authentication/   # cadastro, login, logout e sessão
-└── academia/features/
+├── academia/features/
     ├── catalog/                       # exercícios e técnicas avançadas
     ├── training/                      # registros de treino
     ├── analytics/                     # painel e resumo de análise
-    └── analytics_graphql/             # API GraphQL analítica e documentação
+│   └── analytics_graphql/             # API GraphQL analítica e documentação
+└── simulados/                         # cadastro e histórico de simulados
 ```
 
 A API de análise está disponível em `/api/analytics/graphql/`. O catálogo completo de consultas, campos, funções e exemplos fica em `contexts/academia/features/analytics_graphql/README.md`.

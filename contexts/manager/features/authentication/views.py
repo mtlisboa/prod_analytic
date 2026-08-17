@@ -9,17 +9,17 @@ from .forms import LoginForm, SignUpForm
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect("academia:dashboard")
+        return redirect("manager:home")
     form = LoginForm(request=request, data=request.POST or None)
     if request.method == "POST" and form.is_valid():
         login(request, form.get_user())
-        return redirect(request.GET.get("next") or "academia:dashboard")
+        return redirect(request.GET.get("next") or "manager:home")
     return render(request, "manager/login.html", {"form": form})
 
 
 def signup_view(request):
     if request.user.is_authenticated:
-        return redirect("academia:dashboard")
+        return redirect("manager:home")
     if User.objects.exists():
         messages.info(request, "O cadastro já foi concluído. Entre com sua conta.")
         return redirect("manager:login")
@@ -28,7 +28,7 @@ def signup_view(request):
         user = form.save()
         login(request, user)
         messages.success(request, "Conta criada. Bom treino!")
-        return redirect("academia:dashboard")
+        return redirect("manager:home")
     return render(request, "manager/signup.html", {"form": form})
 
 
@@ -37,4 +37,4 @@ def logout_view(request):
     if request.method == "POST":
         logout(request)
         return redirect("manager:login")
-    return redirect("academia:dashboard")
+    return redirect("manager:home")

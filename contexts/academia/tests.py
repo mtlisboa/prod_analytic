@@ -222,7 +222,7 @@ class SingleUserRegistrationTests(TestCase):
             "password1": "uma-senha-bem-segura-123",
             "password2": "uma-senha-bem-segura-123",
         })
-        self.assertRedirects(response, reverse("academia:dashboard"))
+        self.assertRedirects(response, reverse("manager:home"))
         self.assertEqual(User.objects.count(), 1)
 
     def test_signup_is_blocked_after_first_account(self):

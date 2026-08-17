@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Simulados — Forge{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><p class="eyebrow">Contexto de simulados</p><h1>Seus simulados</h1><p>Registre cada tentativa, observe os padrões e melhore com intenção.</p></div>
+  <a class="button primary" href="{% url 'simulados:create' %}">+ Novo simulado</a>
+</section>
+<section class="stats-grid simulation-stats" aria-label="Resumo de desempenho">
+  <article class="stat-card"><span>Simulados</span><strong>{{ count }}</strong><small>registrados</small></article>
+  <article class="stat-card accent"><span>Aproveitamento</span><strong>{{ accuracy }}<sup>%</sup></strong><small>média geral</small></article>
+  <article class="stat-card"><span>Tempo de prova</span><strong>{{ total_time }}</strong><small>minutos acumulados</small></article>
+</section>
+<section class="simulation-history">
+  <div class="panel-heading"><div><p class="eyebrow">Evolução</p><h2>Histórico</h2></div><span class="unit-chip">{{ count }} registro{{ count|pluralize }}</span></div>
+  {% if simulations %}
+    <div class="simulation-list">
+    {% for simulation in simulations %}
+      <article class="simulation-card">
+        <div class="simulation-score"><strong>{{ simulation.accuracy }}</strong><small>%</small></div>
+        <div class="simulation-content">
+          <div class="simulation-title"><div><small>{{ simulation.exam_date|date:"d M Y" }}</small><h3>{{ simulation.title }}</h3></div><a class="input-tool danger" href="{% url 'simulados:delete' simulation.pk %}">Excluir</a></div>
+          <div class="simulation-results"><span><b>{{ simulation.total_questions }}</b> questões</span><span><b>{{ simulation.correct_answers }}</b> acertos</span><span><b>{{ simulation.wrong_answers }}</b> erros</span><span><b>{{ simulation.total_time_minutes }}</b> min totais</span>{% if simulation.breaks_time_minutes %}<span><b>{{ simulation.breaks_time_minutes }}</b> min em intervalos</span>{% endif %}</div>
+          {% if simulation.observation %}<p class="simulation-observation">“{{ simulation.observation }}”</p>{% endif %}
+          {% if simulation.intervals.all %}<div class="interval-tags">{% for interval in simulation.intervals.all %}<span>Intervalo {{ forloop.counter }}: {{ interval.duration_minutes }} min{% if interval.note %} — {{ interval.note }}{% endif %}</span>{% endfor %}</div>{% endif %}
+          {% if simulation.exam_url %}<a class="exam-link" href="{{ simulation.exam_url }}" target="_blank" rel="noopener noreferrer">Abrir prova ↗</a>{% endif %}
+        </div>
+      </article>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><span>↗</span><h3>Seu primeiro resultado começa aqui.</h3><p>Registre um simulado para acompanhar sua evolução.</p><a class="button primary" href="{% url 'simulados:create' %}">Registrar primeiro simulado</a></div>
+  {% endif %}
+</section>
+{% endblock %}
