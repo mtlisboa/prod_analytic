@@ -34,9 +34,19 @@ def create_training(request):
     record = TrainingRecord(user=request.user)
     form = TrainingRecordForm(request.POST or None, instance=record, user=request.user)
     now = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
-    initial = [{"position": number, "performed_at": now, "rest_time_seconds": 60} for number in range(1, 4)]
+    initial = [{
+        "position": 1,
+        "performed_at": now,
+        "reps": 0,
+        "partial_reps": 0,
+        "execution_time_seconds": 1,
+        "rest_time_seconds": 60,
+    }]
     formset = TrainingSetCreateFormSet(
-        request.POST or None, instance=record, prefix="sets", form_kwargs={"user": request.user},
+        request.POST or None,
+        instance=record,
+        prefix="sets",
+        form_kwargs={"user": request.user},
         initial=initial if request.method != "POST" else None,
     )
     if request.method == "POST" and form.is_valid() and formset.is_valid():

@@ -19,10 +19,18 @@
     card.querySelector("[data-summary]").textContent = `${value("weight_kg") || 0} kg · ${repsText} · ${value("execution_time_seconds") || 0}s execução · ${value("rest_time_seconds") || 0}s descanso`;
   }
 
+  function timerStates(type) {
+    return type === "execution" ? executionTimerStates : restTimerStates;
+  }
+
   function timerState(card, type) {
-    const states = type === "execution" ? executionTimerStates : restTimerStates;
-    if (!states.has(card)) states.set(card, { elapsedMs: 0, startedAt: null, interval: null });
+    const states = timerStates(type);
+    if (!states.has(card)) states.set(card, { elapsedMs: 0, startedAt: null, interval: null, used: false });
     return states.get(card);
+  }
+
+  function existingTimerState(card, type) {
+    return timerStates(type).get(card) || null;
   }
 
   function formatTimer(milliseconds) {
@@ -34,8 +42,10 @@
 
   function renderTimer(card, type) {
     if (card !== activeCard) return;
-    const state = timerState(card, type);
-    const elapsed = state.startedAt ? state.elapsedMs + (Date.now() - state.startedAt) : state.elapsedMs;
+    const state = existingTimerState(card, type);
+    const elapsed = state
+      ? (state.startedAt ? state.elapsedMs + (Date.now() - state.startedAt) : state.elapsedMs)
+      : 0;
     const display = modalFields.querySelector(`[data-${type}-timer-display]`);
     if (display) display.textContent = formatTimer(elapsed);
   }
@@ -48,6 +58,7 @@
   function startTimer(card, type) {
     const state = timerState(card, type);
     if (state.startedAt) return;
+    state.used = true;
     if (state.elapsedMs === 0) {
       const suffix = type === "execution" ? "execution_time_seconds" : "rest_time_seconds";
       const input = modalFields.querySelector(`[name$='-${suffix}']`);
@@ -59,7 +70,8 @@
   }
 
   function pauseTimer(card, type) {
-    const state = timerState(card, type);
+    const state = existingTimerState(card, type);
+    if (!state || !state.used) return;
     if (state.startedAt) {
       state.elapsedMs += Date.now() - state.startedAt;
       state.startedAt = null;
@@ -74,6 +86,7 @@
 
   function resetTimer(card, type) {
     const state = timerState(card, type);
+    state.used = true;
     if (state.interval) window.clearInterval(state.interval);
     state.elapsedMs = 0;
     state.startedAt = null;

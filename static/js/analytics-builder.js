@@ -45,7 +45,12 @@
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({query, variables}),
     });
-    const payload = await response.json();
+    let payload;
+    try {
+      payload = await response.json();
+    } catch (_error) {
+      throw new Error(`A API retornou uma resposta inválida (HTTP ${response.status}).`);
+    }
     if (!response.ok || payload.errors?.length) {
       throw new Error(payload.errors?.map((error) => error.message).join(" ") || `Erro HTTP ${response.status}`);
     }
@@ -127,7 +132,8 @@
   }
 
   function selectedExerciseIds() {
-    return [...exerciseInput.selectedOptions].map((item) => item.value);
+    const ids = [...exerciseInput.selectedOptions].map((item) => item.value);
+    return ids.length ? ids : null;
   }
 
   function lineInputs() {
@@ -138,7 +144,7 @@
   }
 
   function renderLegend(container, series) {
-    container.replaceChildren(...series.map((item, index) => {
+    container.replaceChildren(...series.filter((item) => item.points?.length).map((item, index) => {
       const label = document.createElement("span");
       label.textContent = item.label;
       label.style.setProperty("--series-color", charts.palette[index % charts.palette.length]);
@@ -146,16 +152,29 @@
     }));
   }
 
-  function showChart(containerId, emptyId, legendId, data) {
+  function showChart(containerId, emptyId, legendId, rawData) {
+    const container = document.getElementById(containerId);
     const empty = document.getElementById(emptyId);
-    const hasPoints = data.series.some((series) => series.points.length);
+    const data = charts.normalizeData ? charts.normalizeData(rawData) : rawData;
+    const hasPoints = Boolean(data?.series?.some((series) => series.points?.length));
+
     empty.hidden = hasPoints;
+    empty.style.display = hasPoints ? "none" : "grid";
     empty.textContent = hasPoints ? "" : "Nenhum dado encontrado para esta consulta.";
-    renderLegend(document.getElementById(legendId), data.series);
-    charts.mount(document.getElementById(containerId), data);
+
+    container.hidden = !hasPoints;
+    container.style.display = hasPoints ? "block" : "none";
+    renderLegend(document.getElementById(legendId), data?.series || []);
+
+    if (hasPoints) charts.mount(container, data);
+    else container.replaceChildren();
   }
 
   async function runAnalysis() {
+    if (!startInput.value || !endInput.value) {
+      throw new Error("Informe o período da análise.");
+    }
+
     status.textContent = "Executando consultas GraphQL…";
     status.classList.remove("error");
     const xField = document.getElementById("x-field");
@@ -182,6 +201,11 @@
         groupBy: checkedValues("comparison-group"),
       },
     });
+
+    if (!data?.timeAnalysis || !data?.comparisonAnalysis) {
+      throw new Error("A API não retornou os dados esperados para os gráficos.");
+    }
+
     showChart("productivity-chart", "time-chart-empty", "time-chart-legend", data.timeAnalysis);
     showChart("relation-chart", "comparison-chart-empty", "comparison-chart-legend", data.comparisonAnalysis);
     document.getElementById("comparison-title").textContent = `${data.comparisonAnalysis.y.label} em função de ${data.comparisonAnalysis.x.label}`;
@@ -238,6 +262,7 @@
     try {
       await runAnalysis();
     } catch (error) {
+      console.error("Erro ao executar análise", error);
       status.textContent = `Erro na consulta: ${error.message}`;
       status.classList.add("error");
     }
