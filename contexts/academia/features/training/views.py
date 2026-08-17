@@ -5,7 +5,11 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import TrainingRecordForm, TrainingSetFormSet
+from .forms import (
+    TrainingRecordForm,
+    TrainingSetCreateFormSet,
+    TrainingSetUpdateFormSet,
+)
 from .models import TrainingRecord
 
 
@@ -31,7 +35,7 @@ def create_training(request):
     form = TrainingRecordForm(request.POST or None, instance=record, user=request.user)
     now = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
     initial = [{"position": number, "performed_at": now, "rest_time_seconds": 60} for number in range(1, 4)]
-    formset = TrainingSetFormSet(
+    formset = TrainingSetCreateFormSet(
         request.POST or None, instance=record, prefix="sets", form_kwargs={"user": request.user},
         initial=initial if request.method != "POST" else None,
     )
@@ -51,7 +55,7 @@ def create_training(request):
 def update_training(request, pk):
     record = get_object_or_404(TrainingRecord, pk=pk, user=request.user)
     form = TrainingRecordForm(request.POST or None, instance=record, user=request.user)
-    formset = TrainingSetFormSet(
+    formset = TrainingSetUpdateFormSet(
         request.POST or None, instance=record, prefix="sets",
         form_kwargs={"user": request.user},
     )
