@@ -31,6 +31,7 @@
       <a href="{% url 'manager:home' %}">Contextos</a>
       {% if request.resolver_match.namespace == 'simulados' %}
         <a href="{% url 'simulados:dashboard' %}">Histórico</a>
+        <a href="{% url 'simulados:analytics' %}">Análises</a>
         <a href="{% url 'simulados:create' %}">Novo simulado</a>
         <a href="{% url 'simulados:goal_create' %}">Nova meta</a>
       {% elif request.resolver_match.namespace == 'academia' %}

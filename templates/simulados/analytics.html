@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Análises de simulados — Forge{% endblock %}
+{% block content %}
+<header class="page-heading">
+  <div><p class="eyebrow">Contexto de simulados</p><h1>Análises</h1><p>Transforme tentativas em decisões para a próxima prova.</p></div>
+  <a class="button primary" href="{% url 'simulados:create' %}">+ Novo simulado</a>
+</header>
+
+<section class="panel analytics-builder" id="simulation-analytics">
+  <div class="panel-heading"><div><p class="eyebrow">Filtros compartilhados</p><h2>Construtor de análise</h2></div><span class="unit-chip">2 gráficos</span></div>
+  <div id="simulation-analysis-status" class="analysis-status">Preparando análise…</div>
+  <form id="simulation-analysis-form">
+    <div class="builder-grid shared-filters">
+      <div class="field"><label for="simulation-start">De</label><input id="simulation-start" type="date" required></div>
+      <div class="field"><label for="simulation-end">Até</label><input id="simulation-end" type="date" required></div>
+      <div class="field"><label for="simulation-subject">Matéria</label><select id="simulation-subject"><option value="">Todas</option>{% for subject in subjects %}<option value="{{ subject }}">{{ subject }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="simulation-goal">Prova visada</label><select id="simulation-goal"><option value="">Todas</option>{% for goal in goals %}<option value="{{ goal.pk }}">{{ goal.exam_name }}</option>{% endfor %}</select></div>
+    </div>
+
+    <div class="builder-section">
+      <div><p class="eyebrow">Gráfico superior</p><h2>Performance em função do tempo</h2></div>
+      <div class="builder-grid simulation-time-controls">
+        <div class="field"><label for="simulation-period">Agrupar tempo</label><select id="simulation-period"></select></div>
+        <div class="field"><label for="simulation-time-group">Separar linhas por</label><select id="simulation-time-group"></select></div>
+      </div>
+      <fieldset class="group-fields"><legend>Índices exibidos</legend><div id="simulation-time-metrics" class="checkbox-grid"></div></fieldset>
+    </div>
+
+    <div class="builder-section">
+      <div><p class="eyebrow">Gráfico inferior</p><h2>Comparação dinâmica</h2></div>
+      <div class="builder-grid simulation-dynamic-controls">
+        <div class="field"><label for="simulation-x">Eixo X</label><select id="simulation-x"></select></div>
+        <div class="field"><label for="simulation-y">Eixo Y</label><select id="simulation-y"></select></div>
+        <div class="field"><label for="simulation-aggregation">Função</label><select id="simulation-aggregation"></select></div>
+        <div class="field"><label for="simulation-dynamic-group">Separar linhas por</label><select id="simulation-dynamic-group"></select></div>
+      </div>
+    </div>
+    <div class="form-actions"><button class="button primary" type="submit">Atualizar gráficos</button></div>
+  </form>
+</section>
+
+<section class="panel chart-panel analysis-chart-panel">
+  <div class="panel-heading"><div><p class="eyebrow">Evolução</p><h2>Performance ao longo do tempo</h2></div><span class="unit-chip">X: tempo</span></div>
+  <div id="simulation-time-legend" class="chart-legend"></div>
+  <div class="chart-wrap"><div id="simulation-time-chart" class="line-chart" role="img" aria-label="Gráfico de performance dos simulados ao longo do tempo"></div><div id="simulation-time-empty" class="empty-state chart-overlay">Carregando dados…</div></div>
+</section>
+
+<section class="panel chart-panel relation-panel">
+  <div class="panel-heading"><div><p class="eyebrow">Relação configurável</p><h2 id="simulation-dynamic-title">Aproveitamento por matéria</h2></div><span class="unit-chip">X e Y configuráveis</span></div>
+  <div id="simulation-dynamic-legend" class="chart-legend"></div>
+  <div class="chart-wrap"><div id="simulation-dynamic-chart" class="line-chart" role="img" aria-label="Gráfico dinâmico dos simulados"></div><div id="simulation-dynamic-empty" class="empty-state chart-overlay">Carregando dados…</div></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.FORGE_SIMULATION_ANALYTICS={{ analysis_config|safe }};</script>
+<script src="{% static 'js/chart.js' %}"></script>
+<script src="{% static 'js/simulation-analytics.js' %}"></script>
+{% endblock %}

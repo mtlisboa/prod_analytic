@@ -17,6 +17,34 @@ class SimuladosFlowTests(TestCase):
         self.assertContains(response, "Simulados")
         self.assertContains(response, reverse("simulados:dashboard"))
 
+    def test_analytics_page_has_time_and_dynamic_charts(self):
+        response = self.client.get(reverse("simulados:analytics"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Performance em função do tempo")
+        self.assertContains(response, "Comparação dinâmica")
+        self.assertContains(response, "simulation-time-chart")
+        self.assertContains(response, "simulation-dynamic-chart")
+
+    def test_time_analysis_returns_only_current_user_data(self):
+        Simulado.objects.create(user=self.user, title="PF", exam_date="2026-08-10", subject="DIREITO", total_questions=10, correct_answers=8, wrong_answers=2, total_time_minutes=60, effective_time_minutes=50, rested_time_minutes=10)
+        Simulado.objects.create(user=self.other, title="Outro", exam_date="2026-08-10", subject="DIREITO", total_questions=10, correct_answers=1, wrong_answers=9, total_time_minutes=60, effective_time_minutes=50, rested_time_minutes=10)
+        response = self.client.get(reverse("simulados:analytics_time_data"), {"start_date": "2026-08-01", "end_date": "2026-08-31", "metric": "accuracy"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["series"][0]["points"], [{"x": "10/08/2026", "y": 80}])
+
+    def test_dynamic_analysis_groups_average_by_subject(self):
+        for subject, correct in (("DIREITO", 8), ("DIREITO", 6), ("PORTUGUES", 9)):
+            Simulado.objects.create(user=self.user, title=subject, exam_date="2026-08-10", subject=subject, total_questions=10, correct_answers=correct, wrong_answers=10-correct, total_time_minutes=60, effective_time_minutes=50, rested_time_minutes=10)
+        response = self.client.get(reverse("simulados:analytics_dynamic_data"), {"start_date": "2026-08-01", "end_date": "2026-08-31", "x": "subject", "y": "accuracy", "aggregation": "avg"})
+        self.assertEqual(response.status_code, 200)
+        points = response.json()["series"][0]["points"]
+        self.assertIn({"x": "DIREITO", "y": 70}, points)
+        self.assertIn({"x": "PORTUGUES", "y": 90}, points)
+
+    def test_analytics_rejects_invalid_configuration(self):
+        response = self.client.get(reverse("simulados:analytics_dynamic_data"), {"x": "user", "y": "accuracy"})
+        self.assertEqual(response.status_code, 400)
+
     def test_simulation_is_created_with_intervals_and_link(self):
         response = self.client.post(reverse("simulados:create"), {
             "title": "Simulado PF",
