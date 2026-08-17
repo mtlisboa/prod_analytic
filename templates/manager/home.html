@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Contextos — Forge{% endblock %}
+{% block main_class %}page-shell context-home{% endblock %}
+{% block content %}
+<section class="context-heading">
+  <p class="eyebrow">Seu espaço</p>
+  <h1>Onde você quer<br><em>avançar hoje?</em></h1>
+  <p>Escolha um contexto para focar no que importa agora.</p>
+</section>
+<section class="context-grid" aria-label="Escolha um contexto">
+  <a class="context-card" href="{% url 'academia:dashboard' %}">
+    <span class="context-number">01</span>
+    <span class="context-icon" aria-hidden="true">↗</span>
+    <span class="context-copy"><small>Treinos</small><strong>Academia</strong><span>Registre treinos, acompanhe métricas e analise sua evolução.</span></span>
+    <span class="context-action">Entrar no contexto <b>→</b></span>
+  </a>
+  <a class="context-card" href="{% url 'simulados:dashboard' %}">
+    <span class="context-number">02</span>
+    <span class="context-icon" aria-hidden="true">↗</span>
+    <span class="context-copy"><small>Preparação</small><strong>Simulados</strong><span>Registre provas, acompanhe seu desempenho e identifique padrões.</span></span>
+    <span class="context-action">Entrar no contexto <b>→</b></span>
+  </a>
+</section>
+{% endblock %}

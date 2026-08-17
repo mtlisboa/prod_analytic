@@ -24,14 +24,22 @@
   </button>
   {% if user.is_authenticated %}
   <header class="topbar">
-    <a class="brand" href="{% url 'academia:dashboard' %}" aria-label="Forge, início">
+    <a class="brand" href="{% url 'manager:home' %}" aria-label="Forge, contextos">
       <span class="brand-mark">F</span><span>FORGE</span>
     </a>
     <nav class="nav" aria-label="Navegação principal">
-      <a href="{% url 'academia:dashboard' %}">Análise</a>
-      <a href="{% url 'academia:training_create' %}">Registrar treino</a>
-      <a href="{% url 'academia:exercise_list' %}">Exercícios</a>
-      <a href="{% url 'academia:technique_list' %}">Técnicas</a>
+      <a href="{% url 'manager:home' %}">Contextos</a>
+      {% if request.resolver_match.namespace == 'simulados' %}
+        <a href="{% url 'simulados:dashboard' %}">Histórico</a>
+        <a href="{% url 'simulados:analytics' %}">Análises</a>
+        <a href="{% url 'simulados:create' %}">Novo simulado</a>
+        <a href="{% url 'simulados:goal_create' %}">Nova meta</a>
+      {% elif request.resolver_match.namespace == 'academia' %}
+        <a href="{% url 'academia:dashboard' %}">Análise</a>
+        <a href="{% url 'academia:training_create' %}">Registrar treino</a>
+        <a href="{% url 'academia:exercise_list' %}">Exercícios</a>
+        <a href="{% url 'academia:technique_list' %}">Técnicas</a>
+      {% endif %}
     </nav>
     <form method="post" action="{% url 'manager:logout' %}">{% csrf_token %}<button class="text-button" type="submit">Sair</button></form>
   </header>

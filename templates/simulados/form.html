@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Novo simulado — Forge{% endblock %}
+{% block content %}
+<section class="page-heading narrow"><div><p class="eyebrow">Novo registro</p><h1>Registrar simulado</h1><p>Guarde o resultado e suas impressões enquanto a prova ainda está fresca.</p></div></section>
+<section class="panel form-panel narrow">
+  <form method="post" class="form-grid" id="simulation-form">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="field-error span-2">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="field span-2 goal-selector"><label for="goal-search">Pesquisar prova visada <small>opcional</small></label><input id="goal-search" type="search" placeholder="Digite o nome da prova..." autocomplete="off" data-goal-search><label class="sr-only" for="{{ form.meta.id_for_label }}">{{ form.meta.label }}</label>{{ form.meta }}{{ form.meta.errors }}</div>
+    <div class="field span-2"><label for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>{{ form.subject }}<datalist id="subject-options"></datalist><small>Use apenas letras sem acentos, números e espaços. A matéria será salva em CAIXA ALTA.</small>{{ form.subject.errors }}</div>
+    <div class="field span-2"><label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>{{ form.title }}{{ form.title.errors }}</div>
+    <div class="field span-2"><label for="{{ form.exam_url.id_for_label }}">{{ form.exam_url.label }} <small>opcional</small></label>{{ form.exam_url }}{{ form.exam_url.errors }}</div>
+    <div class="field"><label for="{{ form.exam_date.id_for_label }}">{{ form.exam_date.label }}</label>{{ form.exam_date }}{{ form.exam_date.errors }}</div>
+    <div class="field"><label for="{{ form.total_questions.id_for_label }}">{{ form.total_questions.label }}</label>{{ form.total_questions }}{{ form.total_questions.errors }}</div>
+    <div class="field"><label for="{{ form.correct_answers.id_for_label }}">{{ form.correct_answers.label }}</label>{{ form.correct_answers }}{{ form.correct_answers.errors }}</div>
+    <div class="field"><label for="{{ form.wrong_answers.id_for_label }}">{{ form.wrong_answers.label }}</label>{{ form.wrong_answers }}{{ form.wrong_answers.errors }}</div>
+    <fieldset class="group-fields span-2"><legend>Tempos de execução</legend><div class="simulation-time-grid"><div class="time-group"><strong>Tempo efetivo</strong><div class="form-grid"><div class="field"><label for="{{ form.effective_hours.id_for_label }}">Horas</label>{{ form.effective_hours }}</div><div class="field"><label for="{{ form.effective_minutes.id_for_label }}">Minutos</label>{{ form.effective_minutes }}</div></div></div><div class="time-group"><strong>Tempo descansado</strong><div class="form-grid"><div class="field"><label for="{{ form.rested_hours.id_for_label }}">Horas</label>{{ form.rested_hours }}</div><div class="field"><label for="{{ form.rested_minutes.id_for_label }}">Minutos</label>{{ form.rested_minutes }}</div></div></div><div class="time-group total-time-group"><strong>Tempo total</strong><div class="form-grid"><div class="field"><label for="{{ form.total_hours.id_for_label }}">Horas</label>{{ form.total_hours }}</div><div class="field"><label for="{{ form.total_minutes.id_for_label }}">Minutos</label>{{ form.total_minutes }}</div></div></div></div></fieldset>
+    <fieldset class="group-fields span-2 interval-fieldset"><div class="sets-heading"><div><p class="eyebrow">Pausas</p><h2>Intervalos</h2></div><button class="input-tool" id="add-interval" type="button">+ Adicionar intervalo</button></div>
+      {{ formset.management_form }}
+      {% if formset.non_form_errors %}<div class="field-error">{{ formset.non_form_errors }}</div>{% endif %}
+      <div id="interval-list" class="interval-list">
+      {% for interval_form in formset %}<div class="interval-row" data-interval-form>{{ interval_form.id }}{{ interval_form.position }}<span class="interval-number">{{ forloop.counter|stringformat:"02d" }}</span><div class="field"><label>Duração (min)</label>{{ interval_form.duration_minutes }}{{ interval_form.duration_minutes.errors }}</div><div class="field"><label>Observação <small>opcional</small></label>{{ interval_form.note }}{{ interval_form.note.errors }}</div><div hidden>{{ interval_form.DELETE }}</div><button class="input-tool danger remove-interval" type="button">Remover</button></div>{% endfor %}
+      </div>
+      <template id="empty-interval"><div class="interval-row" data-interval-form>{{ formset.empty_form.id }}{{ formset.empty_form.position }}<span class="interval-number"></span><div class="field"><label>Duração (min)</label>{{ formset.empty_form.duration_minutes }}</div><div class="field"><label>Observação <small>opcional</small></label>{{ formset.empty_form.note }}</div><div hidden>{{ formset.empty_form.DELETE }}</div><button class="input-tool danger remove-interval" type="button">Remover</button></div></template>
+    </fieldset>
+    <div class="field span-2"><label for="{{ form.observation.id_for_label }}">{{ form.observation.label }} <small>opcional</small></label>{{ form.observation }}{{ form.observation.errors }}</div>
+    <div class="form-actions span-2"><a class="button secondary" href="{% url 'simulados:dashboard' %}">Cancelar</a><button class="button primary" type="submit">Salvar simulado</button></div>
+  </form>
+</section>
+{{ goal_subjects|json_script:"goal-subject-data" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/simulations.js' %}"></script>{% endblock %}

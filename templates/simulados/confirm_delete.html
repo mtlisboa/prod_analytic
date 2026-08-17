@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Excluir simulado — Forge{% endblock %}
+{% block content %}<section class="page-heading narrow"><div><p class="eyebrow">Confirmação</p><h1>Excluir simulado?</h1><p>“{{ simulado.title }}” e seus intervalos serão removidos permanentemente.</p></div></section><section class="panel form-panel narrow"><form method="post">{% csrf_token %}<div class="form-actions"><a class="button secondary" href="{% url 'simulados:dashboard' %}">Cancelar</a><button class="button danger-button" type="submit">Excluir simulado</button></div></form></section>{% endblock %}

@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "contexts.manager.apps.ManagerConfig",
     "contexts.academia.apps.AcademiaConfig",
+    "contexts.simulados.apps.SimuladosConfig",
 ]
 
 MIDDLEWARE = [
@@ -91,7 +92,7 @@ STORAGES = {
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "manager:login"
-LOGIN_REDIRECT_URL = "academia:dashboard"
+LOGIN_REDIRECT_URL = "manager:home"
 LOGOUT_REDIRECT_URL = "manager:login"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = not DEBUG
