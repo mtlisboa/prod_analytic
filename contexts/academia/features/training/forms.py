@@ -39,11 +39,16 @@ class TrainingSetForm(forms.ModelForm):
 
     class Meta:
         model = TrainingSet
-        fields = ("position", "performed_at", "weight_kg", "execution_time_seconds", "rest_time_seconds", "advanced_technique", "notes")
+        fields = (
+            "position", "performed_at", "weight_kg", "reps", "partial_reps",
+            "execution_time_seconds", "rest_time_seconds", "advanced_technique", "notes",
+        )
         widgets = {
             "position": forms.HiddenInput(),
             "performed_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
             "weight_kg": forms.NumberInput(attrs={"min": 0, "step": "0.25", "inputmode": "decimal"}),
+            "reps": forms.NumberInput(attrs={"min": 0, "step": 1, "inputmode": "numeric"}),
+            "partial_reps": forms.NumberInput(attrs={"min": 0, "step": 1, "inputmode": "numeric"}),
             "rest_time_seconds": forms.NumberInput(attrs={"min": 0, "inputmode": "numeric"}),
             "notes": forms.TextInput(attrs={"placeholder": "Opcional"}),
         }
@@ -55,6 +60,17 @@ class TrainingSetForm(forms.ModelForm):
         self.fields["advanced_technique"].queryset = user.advanced_techniques.all()
         self.fields["advanced_technique"].empty_label = "Nenhuma"
 
+    def clean(self):
+        cleaned_data = super().clean()
+        reps = cleaned_data.get("reps")
+        partial_reps = cleaned_data.get("partial_reps")
+        if reps is not None and partial_reps is not None and partial_reps > reps:
+            self.add_error(
+                "partial_reps",
+                "As repetições parciais não podem ser maiores que o total de repetições.",
+            )
+        return cleaned_data
+
     def clean_advanced_technique(self):
         technique = self.cleaned_data.get("advanced_technique")
         if technique and technique.user_id != self.user.id:
@@ -62,7 +78,12 @@ class TrainingSetForm(forms.ModelForm):
         return technique
 
 
-TrainingSetFormSet = inlineformset_factory(
+TrainingSetCreateFormSet = inlineformset_factory(
     TrainingRecord, TrainingSet, form=TrainingSetForm, extra=2,
+    min_num=1, validate_min=True, can_delete=True,
+)
+
+TrainingSetUpdateFormSet = inlineformset_factory(
+    TrainingRecord, TrainingSet, form=TrainingSetForm, extra=0,
     min_num=1, validate_min=True, can_delete=True,
 )

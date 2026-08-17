@@ -39,6 +39,8 @@ class TrainingSet(models.Model):
     position = models.PositiveSmallIntegerField("número da série", validators=[MinValueValidator(1)])
     performed_at = models.DateTimeField("data e hora")
     weight_kg = models.DecimalField("peso (kg)", max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
+    reps = models.PositiveIntegerField("repetições totais", default=0, validators=[MinValueValidator(0)])
+    partial_reps = models.PositiveIntegerField("repetições parciais", default=0, validators=[MinValueValidator(0)])
     execution_time_seconds = models.PositiveIntegerField("tempo de execução (segundos)", validators=[MinValueValidator(1)])
     rest_time_seconds = models.PositiveIntegerField("tempo de descanso (segundos)", validators=[MinValueValidator(0)])
     advanced_technique = models.ForeignKey(
@@ -49,7 +51,13 @@ class TrainingSet(models.Model):
 
     class Meta:
         ordering = ("position",)
-        constraints = [models.UniqueConstraint(fields=("training_record", "position"), name="unique_set_position")]
+        constraints = [
+            models.UniqueConstraint(fields=("training_record", "position"), name="unique_set_position"),
+            models.CheckConstraint(
+                condition=models.Q(partial_reps__lte=models.F("reps")),
+                name="partial_reps_lte_reps",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.training_record.exercise} — série {self.position}"
