@@ -47,10 +47,32 @@
     return [...indexes].sort((a, b) => a - b);
   }
 
-  function renderChart(container, data) {
-    if (!container || !data.series?.length) return;
-    const width = Math.max(container.clientWidth, 320);
-    const height = Math.max(container.clientHeight, 240);
+  function normalizeData(data) {
+    if (!data?.x || !data?.y || !Array.isArray(data.series)) return null;
+    const xKind = String(data.x.kind || "").toLowerCase();
+    const yKind = String(data.y.kind || "").toLowerCase();
+    const normalized = {
+      ...data,
+      x: {...data.x, kind: xKind},
+      y: {...data.y, kind: yKind},
+      series: data.series.map((series) => ({
+        ...series,
+        points: (series.points || []).filter((point) => {
+          if (point == null || point.x == null || point.y == null) return false;
+          if (xKind === "number" && !Number.isFinite(Number(point.x))) return false;
+          if (yKind === "number" && !Number.isFinite(Number(point.y))) return false;
+          return true;
+        }),
+      })),
+    };
+    return normalized;
+  }
+
+  function renderChart(container, rawData) {
+    const data = normalizeData(rawData);
+    if (!container || !data?.series?.length) return;
+    const width = Math.max(container.clientWidth || container.parentElement?.clientWidth || 0, 320);
+    const height = Math.max(container.clientHeight || container.parentElement?.clientHeight || 0, 240);
     const pad = {top: 18, right: 28, bottom: 68, left: 76};
     const chartWidth = width - pad.left - pad.right;
     const chartHeight = height - pad.top - pad.bottom;
@@ -70,7 +92,13 @@
     const xPixel = (value) => pad.left + ((xValue(value) - minX) / Math.max(maxX - minX, 1)) * chartWidth;
     const yPixel = (value) => pad.top + chartHeight - ((yValue(value) - minY) / Math.max(maxY - minY, 1)) * chartHeight;
 
-    const svg = svgElement("svg", {viewBox: `0 0 ${width} ${height}`, preserveAspectRatio: "xMidYMid meet", "aria-hidden": "true"});
+    const svg = svgElement("svg", {
+      viewBox: `0 0 ${width} ${height}`,
+      preserveAspectRatio: "xMidYMid meet",
+      width: "100%",
+      height: "100%",
+      "aria-hidden": "true",
+    });
     const grid = svgElement("g", {stroke: "#e2e1d9", "stroke-width": "1"});
     const labels = svgElement("g", {fill: "#777c72", "font-size": "11", "font-family": "DM Sans, sans-serif"});
 
@@ -78,7 +106,7 @@
       ? sampledIndexes(yCategories.length).map((index) => ({value: index, label: yCategories[index]}))
       : Array.from({length: 5}, (_, index) => {
           const value = minY + ((maxY - minY) / 4) * index;
-          return {value, label: value.toFixed(value < 10 ? 1 : 0)};
+          return {value, label: value.toFixed(Math.abs(value) < 10 ? 1 : 0)};
         });
     yTicks.forEach((tick) => {
       const y = pad.top + chartHeight - ((tick.value - minY) / Math.max(maxY - minY, 1)) * chartHeight;
@@ -90,7 +118,7 @@
       ? sampledIndexes(xCategories.length).map((index) => ({value: index, label: xCategories[index]}))
       : Array.from({length: 5}, (_, index) => {
           const value = minX + ((maxX - minX) / 4) * index;
-          return {value, label: value.toFixed(value < 10 ? 1 : 0)};
+          return {value, label: value.toFixed(Math.abs(value) < 10 ? 1 : 0)};
         });
     xTicks.forEach((tick) => {
       const x = pad.left + ((tick.value - minX) / Math.max(maxX - minX, 1)) * chartWidth;
@@ -102,6 +130,7 @@
     svg.append(grid, labels);
 
     data.series.forEach((series, seriesIndex) => {
+      if (!series.points.length) return;
       const color = palette[seriesIndex % palette.length];
       const ordered = [...series.points];
       if (data.x.kind === "number") ordered.sort((a, b) => Number(a.x) - Number(b.x));
@@ -143,10 +172,11 @@
     container.replaceChildren(svg);
   }
 
-  function mountChart(container, data) {
+  function mountChart(container, rawData) {
     if (!container) return;
     observers.get(container)?.disconnect();
     container.replaceChildren();
+    const data = normalizeData(rawData);
     if (!data?.series?.some((series) => series.points.length)) return;
     renderChart(container, data);
     if (window.ResizeObserver) {
@@ -166,5 +196,5 @@
     });
   });
 
-  window.FORGE_CHARTS = {mount: mountChart, palette};
+  window.FORGE_CHARTS = {mount: mountChart, palette, normalizeData};
 })();
