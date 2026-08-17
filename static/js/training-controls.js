@@ -5,7 +5,8 @@
   if (!list || !modal) return;
   const total = document.querySelector("#id_sets-TOTAL_FORMS");
   const modalFields = document.querySelector("#modal-fields");
-  const timerStates = new WeakMap();
+  const restTimerStates = new WeakMap();
+  const executionTimerStates = new WeakMap();
   let activeCard = null;
   let snapshot = null;
 
@@ -18,9 +19,10 @@
     card.querySelector("[data-summary]").textContent = `${value("weight_kg") || 0} kg · ${repsText} · ${value("execution_time_seconds") || 0}s execução · ${value("rest_time_seconds") || 0}s descanso`;
   }
 
-  function timerState(card) {
-    if (!timerStates.has(card)) timerStates.set(card, { elapsedMs: 0, startedAt: null, interval: null });
-    return timerStates.get(card);
+  function timerState(card, type) {
+    const states = type === "execution" ? executionTimerStates : restTimerStates;
+    if (!states.has(card)) states.set(card, { elapsedMs: 0, startedAt: null, interval: null });
+    return states.get(card);
   }
 
   function formatTimer(milliseconds) {
@@ -30,53 +32,56 @@
     return `${minutes}:${seconds}`;
   }
 
-  function renderTimer(card) {
+  function renderTimer(card, type) {
     if (card !== activeCard) return;
-    const state = timerState(card);
+    const state = timerState(card, type);
     const elapsed = state.startedAt ? state.elapsedMs + (Date.now() - state.startedAt) : state.elapsedMs;
-    const display = modalFields.querySelector("[data-rest-timer-display]");
+    const display = modalFields.querySelector(`[data-${type}-timer-display]`);
     if (display) display.textContent = formatTimer(elapsed);
   }
 
-  function setRestSeconds(input, elapsedMs) {
-    input.value = Math.max(0, Math.round(elapsedMs / 1000));
+  function setTimerSeconds(input, elapsedMs, minSeconds = 0) {
+    input.value = Math.max(minSeconds, Math.round(elapsedMs / 1000));
     input.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  function startTimer(card) {
-    const state = timerState(card);
+  function startTimer(card, type) {
+    const state = timerState(card, type);
     if (state.startedAt) return;
     if (state.elapsedMs === 0) {
-      const input = modalFields.querySelector("[name$='-rest_time_seconds']");
-      if (input) input.value = 0;
+      const suffix = type === "execution" ? "execution_time_seconds" : "rest_time_seconds";
+      const input = modalFields.querySelector(`[name$='-${suffix}']`);
+      if (input) input.value = type === "execution" ? 1 : 0;
     }
     state.startedAt = Date.now();
-    state.interval = window.setInterval(() => renderTimer(card), 250);
-    renderTimer(card);
+    state.interval = window.setInterval(() => renderTimer(card, type), 250);
+    renderTimer(card, type);
   }
 
-  function pauseTimer(card) {
-    const state = timerState(card);
+  function pauseTimer(card, type) {
+    const state = timerState(card, type);
     if (state.startedAt) {
       state.elapsedMs += Date.now() - state.startedAt;
       state.startedAt = null;
     }
     if (state.interval) window.clearInterval(state.interval);
     state.interval = null;
-    const input = modalFields.querySelector("[name$='-rest_time_seconds']");
-    if (input) setRestSeconds(input, state.elapsedMs);
-    renderTimer(card);
+    const suffix = type === "execution" ? "execution_time_seconds" : "rest_time_seconds";
+    const input = modalFields.querySelector(`[name$='-${suffix}']`);
+    if (input) setTimerSeconds(input, state.elapsedMs, type === "execution" ? 1 : 0);
+    renderTimer(card, type);
   }
 
-  function resetTimer(card) {
-    const state = timerState(card);
+  function resetTimer(card, type) {
+    const state = timerState(card, type);
     if (state.interval) window.clearInterval(state.interval);
     state.elapsedMs = 0;
     state.startedAt = null;
     state.interval = null;
-    const input = modalFields.querySelector("[name$='-rest_time_seconds']");
-    if (input) input.value = 0;
-    renderTimer(card);
+    const suffix = type === "execution" ? "execution_time_seconds" : "rest_time_seconds";
+    const input = modalFields.querySelector(`[name$='-${suffix}']`);
+    if (input) input.value = type === "execution" ? 1 : 0;
+    renderTimer(card, type);
   }
 
   function validateReps() {
@@ -89,11 +94,15 @@
   }
 
   function close(save) {
-    if (activeCard) pauseTimer(activeCard);
+    if (activeCard) {
+      pauseTimer(activeCard, "execution");
+      pauseTimer(activeCard, "rest");
+    }
     if (!save && snapshot) [...modalFields.querySelectorAll("input,select")].forEach((field, i) => { field.value = snapshot[i]; });
     while (modalFields.firstChild) activeCard.querySelector(".set-fields").append(modalFields.firstChild);
     if (save) summary(activeCard);
-    timerStates.delete(activeCard);
+    executionTimerStates.delete(activeCard);
+    restTimerStates.delete(activeCard);
     modal.close();
     activeCard = null;
   }
@@ -104,7 +113,8 @@
     [...fields.children].forEach(node => { if (!node.matches("input[type=hidden], input[type=checkbox]")) modalFields.append(node); });
     snapshot = [...modalFields.querySelectorAll("input,select")].map(field => field.value);
     modal.querySelector("#modal-title").textContent = card.querySelector(".set-number").textContent;
-    renderTimer(card);
+    renderTimer(card, "execution");
+    renderTimer(card, "rest");
     modal.showModal();
   }
 
@@ -123,9 +133,12 @@
 
   modal.addEventListener("click", event => {
     if (!activeCard) return;
-    if (event.target.closest("[data-rest-timer-start]")) startTimer(activeCard);
-    if (event.target.closest("[data-rest-timer-pause]")) pauseTimer(activeCard);
-    if (event.target.closest("[data-rest-timer-reset]")) resetTimer(activeCard);
+    if (event.target.closest("[data-execution-timer-start]")) startTimer(activeCard, "execution");
+    if (event.target.closest("[data-execution-timer-pause]")) pauseTimer(activeCard, "execution");
+    if (event.target.closest("[data-execution-timer-reset]")) resetTimer(activeCard, "execution");
+    if (event.target.closest("[data-rest-timer-start]")) startTimer(activeCard, "rest");
+    if (event.target.closest("[data-rest-timer-pause]")) pauseTimer(activeCard, "rest");
+    if (event.target.closest("[data-rest-timer-reset]")) resetTimer(activeCard, "rest");
   });
 
   modalFields.addEventListener("input", event => {
@@ -141,6 +154,7 @@
     const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     card.querySelector("[name$='-performed_at']").value = now;
     card.querySelector("[name$='-rest_time_seconds']").value = 60;
+    card.querySelector("[name$='-execution_time_seconds']").value = 1;
     card.querySelector("[name$='-reps']").value = 0;
     card.querySelector("[name$='-partial_reps']").value = 0;
     renumber();
@@ -154,7 +168,11 @@
   modal.querySelector(".modal-cancel").onclick = () => close(false);
   modal.querySelector(".modal-close").onclick = () => close(false);
   modal.addEventListener("cancel", event => { event.preventDefault(); close(false); });
-  trainingForm?.addEventListener("submit", () => { if (activeCard) pauseTimer(activeCard); });
+  trainingForm?.addEventListener("submit", () => {
+    if (!activeCard) return;
+    pauseTimer(activeCard, "execution");
+    pauseTimer(activeCard, "rest");
+  });
 
   visibleCards().forEach(summary);
   renumber();
