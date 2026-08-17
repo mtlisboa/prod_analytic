@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Excluir meta — Forge{% endblock %}
+{% block content %}<section class="page-heading narrow"><div><p class="eyebrow">Confirmação</p><h1>Excluir meta?</h1><p>A meta para “{{ goal.exam_name }}” será removida permanentemente.</p></div></section><section class="panel form-panel narrow"><form method="post">{% csrf_token %}<div class="form-actions"><a class="button secondary" href="{% url 'simulados:dashboard' %}">Cancelar</a><button class="button danger-button" type="submit">Excluir meta</button></div></form></section>{% endblock %}

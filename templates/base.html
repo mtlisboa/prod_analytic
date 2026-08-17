@@ -32,6 +32,7 @@
       {% if request.resolver_match.namespace == 'simulados' %}
         <a href="{% url 'simulados:dashboard' %}">Histórico</a>
         <a href="{% url 'simulados:create' %}">Novo simulado</a>
+        <a href="{% url 'simulados:goal_create' %}">Nova meta</a>
       {% elif request.resolver_match.namespace == 'academia' %}
         <a href="{% url 'academia:dashboard' %}">Análise</a>
         <a href="{% url 'academia:training_create' %}">Registrar treino</a>

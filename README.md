@@ -1,6 +1,6 @@
 # Forge — diário de treino
 
-Aplicação pessoal em Django com contextos de Academia e Simulados. Permite registrar exercícios, técnicas avançadas e treinos, além de provas com resultados, tempo total, intervalos, link e impressões.
+Aplicação pessoal em Django com contextos de Academia e Simulados. Permite registrar exercícios, técnicas avançadas e treinos, além de provas com resultados, tempo total, intervalos, link e impressões. O contexto de Simulados também aceita metas por prova, com tempos-alvo e aproveitamento desejado por matéria.
 
 ## Arquitetura
 
