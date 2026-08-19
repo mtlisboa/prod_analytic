@@ -19,6 +19,10 @@ Todos os resolvers limitam exercícios, técnicas e séries ao usuário autentic
 | `EXERCISE` | Exercício | categoria | — | `RAW`, `COUNT` |
 | `SET_POSITION` | Número da série | número | série | todas |
 | `WEIGHT` | Força/carga | número | kg | todas |
+| `REPS` | Repetições totais | número | repetições | todas |
+| `PARTIAL_REPS` | Repetições parciais | número | repetições | todas |
+| `PARTIAL_REPS_RATIO` | Repetições parciais / total | número | % | todas |
+| `NON_PARTIAL_REPS` | Repetições totais - parciais | número | repetições | todas |
 | `EXECUTION` | Tempo de execução | número | s | todas |
 | `REST` | Tempo de descanso | número | s | todas |
 | `TECHNIQUE` | Técnica | categoria | — | `RAW`, `COUNT` |
