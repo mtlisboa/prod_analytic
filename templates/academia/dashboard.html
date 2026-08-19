@@ -34,11 +34,11 @@
     </div>
 
     <div class="builder-section">
-      <div><p class="eyebrow">Gráfico inferior</p><h2>Comparação entre X e Y</h2></div>
-      <div class="builder-grid axis-builder-grid">
+      <div class="sets-heading"><div><p class="eyebrow">Gráfico inferior</p><h2>Comparação entre X e Y</h2></div><button id="add-comparison-line" class="button secondary" type="button">+ Adicionar linha Y</button></div>
+      <div class="builder-grid compact-grid">
         <div class="axis-builder"><strong>Eixo X</strong><div class="field"><label for="x-field">Campo</label><select id="x-field"></select></div><div class="field"><label for="x-function">Função</label><select id="x-function"></select></div></div>
-        <div class="axis-builder"><strong>Eixo Y</strong><div class="field"><label for="y-field">Campo</label><select id="y-field"></select></div><div class="field"><label for="y-function">Função</label><select id="y-function"></select></div></div>
       </div>
+      <div id="comparison-lines" class="axis-lines"></div>
       <fieldset class="group-fields"><legend>Agregar classes em linhas diferentes</legend><div id="comparison-groups" class="checkbox-grid"></div></fieldset>
     </div>
     <div class="form-actions"><button class="button primary" type="submit">Executar análise</button></div>

@@ -88,7 +88,9 @@ Variáveis de exemplo:
 
 ## 4. Comparação dinâmica
 
-`comparisonAnalysis` aceita campo e função independentes em X e Y. `groupBy` aceita vários campos e cria uma linha para cada combinação de classes.
+`comparisonAnalysis` aceita um campo em X e várias linhas configuráveis em Y, cada
+uma com campo e função independentes. `groupBy` aceita vários campos e multiplica
+cada linha Y pelas combinações de classes encontradas.
 
 ```graphql
 query ComparisonAnalysis($input: ComparisonAnalysisInput!) {
@@ -100,7 +102,7 @@ query ComparisonAnalysis($input: ComparisonAnalysisInput!) {
 }
 ```
 
-Exemplo: força por número da série, com uma linha para cada exercício e técnica:
+Exemplo: força e descanso por número da série, com linhas para cada exercício e técnica:
 
 ```json
 {
@@ -108,7 +110,10 @@ Exemplo: força por número da série, com uma linha para cada exercício e téc
     "startDate": "2026-08-01",
     "endDate": "2026-08-31",
     "x": {"field": "SET_POSITION", "function": "RAW"},
-    "y": {"field": "WEIGHT", "function": "AVG"},
+    "lines": [
+      {"field": "WEIGHT", "function": "AVG"},
+      {"field": "REST", "function": "AVG"}
+    ],
     "groupBy": ["EXERCISE", "TECHNIQUE"],
     "exerciseIds": [],
     "techniqueId": null
@@ -118,11 +123,11 @@ Exemplo: força por número da série, com uma linha para cada exercício e téc
 
 ### Semântica das funções na comparação
 
-- X e Y com `RAW`: retorna um ponto para cada série registrada.
+- X e uma linha Y com `RAW`: retorna um ponto para cada série registrada.
 - X com `RAW` e Y agregada: agrupa os registros pelo valor de X e aplica a função em Y.
 - X agregada e Y com `RAW`: agrupa pelo valor de Y e aplica a função em X.
 - X e Y agregadas: retorna um ponto agregado para cada linha definida por `groupBy`.
-- Sem `groupBy`, todos os resultados pertencem à linha `Dados`.
+- Sem `groupBy`, cada configuração Y gera sua própria linha.
 
 ## Erros de validação
 

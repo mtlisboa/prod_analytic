@@ -82,16 +82,21 @@ def time_data(request):
 @login_required
 def dynamic_data(request):
     x_field = request.GET.get("x", "subject")
-    y_field = request.GET.get("y", "accuracy")
+    y_fields = request.GET.getlist("y") or ["accuracy"]
     aggregation = request.GET.get("aggregation", "avg")
     group_by = request.GET.get("group_by", "none")
-    if x_field not in X_FIELDS or y_field not in Y_FIELDS or aggregation not in AGGREGATIONS or group_by not in GROUPS:
+    if (
+        x_field not in X_FIELDS
+        or any(y_field not in Y_FIELDS for y_field in y_fields)
+        or aggregation not in AGGREGATIONS
+        or group_by not in GROUPS
+    ):
         return JsonResponse({"error": "Configuração do gráfico dinâmico inválida."}, status=400)
     try:
         queryset = filtered_simulations(**_filters(request))
     except ValueError as error:
         return JsonResponse({"error": str(error)}, status=400)
     return JsonResponse(build_dynamic_analysis(
-        queryset=queryset, x_field=x_field, y_field=y_field,
+        queryset=queryset, x_field=x_field, y_fields=y_fields,
         aggregation=aggregation, group_by=group_by,
     ))

@@ -32,6 +32,7 @@
   const status = document.getElementById("analysis-status");
   const fieldsList = document.getElementById("analysis-fields");
   const timeLines = document.getElementById("time-lines");
+  const comparisonLines = document.getElementById("comparison-lines");
   const startInput = document.getElementById("analysis-start");
   const endInput = document.getElementById("analysis-end");
   const exerciseInput = document.getElementById("analysis-exercises");
@@ -85,6 +86,14 @@
   }
 
   function createTimeLine(fieldKey = "WEIGHT", functionKey = "AVG") {
+    createAxisLine(timeLines, fieldKey, functionKey);
+  }
+
+  function createComparisonLine(fieldKey = "WEIGHT", functionKey = "RAW") {
+    createAxisLine(comparisonLines, fieldKey, functionKey);
+  }
+
+  function createAxisLine(container, fieldKey, functionKey) {
     const row = document.createElement("div");
     row.className = "axis-line";
     const fieldWrap = document.createElement("div");
@@ -107,10 +116,10 @@
     remove.className = "input-tool danger";
     remove.textContent = "Remover";
     remove.addEventListener("click", () => {
-      if (timeLines.children.length > 1) row.remove();
+      if (container.children.length > 1) row.remove();
     });
     row.append(fieldWrap, functionWrap, remove);
-    timeLines.appendChild(row);
+    container.appendChild(row);
   }
 
   function renderGroups(container, name, defaultField = "") {
@@ -136,8 +145,8 @@
     return ids.length ? ids : null;
   }
 
-  function lineInputs() {
-    return [...timeLines.querySelectorAll(".axis-line")].map((row) => {
+  function lineInputs(container) {
+    return [...container.querySelectorAll(".axis-line")].map((row) => {
       const selects = row.querySelectorAll("select");
       return {field: selects[0].value, function: selects[1].value};
     });
@@ -179,8 +188,6 @@
     status.classList.remove("error");
     const xField = document.getElementById("x-field");
     const xFunction = document.getElementById("x-function");
-    const yField = document.getElementById("y-field");
-    const yFunction = document.getElementById("y-function");
     const common = {
       startDate: startInput.value,
       endDate: endInput.value,
@@ -191,13 +198,13 @@
       time: {
         ...common,
         period: document.getElementById("time-period").value,
-        lines: lineInputs(),
+        lines: lineInputs(timeLines),
         groupBy: checkedValues("time-group"),
       },
       comparison: {
         ...common,
         x: {field: xField.value, function: xFunction.value},
-        y: {field: yField.value, function: yFunction.value},
+        lines: lineInputs(comparisonLines),
         groupBy: checkedValues("comparison-group"),
       },
     });
@@ -208,7 +215,8 @@
 
     showChart("productivity-chart", "time-chart-empty", "time-chart-legend", data.timeAnalysis);
     showChart("relation-chart", "comparison-chart-empty", "comparison-chart-legend", data.comparisonAnalysis);
-    document.getElementById("comparison-title").textContent = `${data.comparisonAnalysis.y.label} em função de ${data.comparisonAnalysis.x.label}`;
+    const comparisonLabels = lineInputs(comparisonLines).map((line) => fields.find((field) => field.key === line.field)?.label);
+    document.getElementById("comparison-title").textContent = `${comparisonLabels.join(" + ")} em função de ${data.comparisonAnalysis.x.label}`;
     status.textContent = "Análise atualizada pela API GraphQL.";
   }
 
@@ -239,14 +247,11 @@
       renderGroups(document.getElementById("comparison-groups"), "comparison-group", "EXERCISE");
       const xField = document.getElementById("x-field");
       const xFunction = document.getElementById("x-function");
-      const yField = document.getElementById("y-field");
-      const yFunction = document.getElementById("y-function");
       populateFieldSelect(xField, "SET_POSITION");
-      populateFieldSelect(yField, "WEIGHT");
       populateFunctions(xField, xFunction, "RAW");
-      populateFunctions(yField, yFunction, "RAW");
       xField.addEventListener("change", () => populateFunctions(xField, xFunction, "RAW"));
-      yField.addEventListener("change", () => populateFunctions(yField, yFunction, "RAW"));
+      createComparisonLine("WEIGHT", "RAW");
+      createComparisonLine("REST", "RAW");
       form.hidden = false;
       status.textContent = "Campos carregados. Configure ou execute a análise padrão.";
       await runAnalysis();
@@ -257,6 +262,7 @@
   }
 
   document.getElementById("add-time-line").addEventListener("click", () => createTimeLine());
+  document.getElementById("add-comparison-line").addEventListener("click", () => createComparisonLine());
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {

@@ -23,17 +23,33 @@
     return keys.map((key) => fields.get(key));
   }
 
-  function renderMetrics() {
-    input("simulation-time-metrics").replaceChildren(...config.timeMetrics.map((key) => {
+  function metricCheckboxes(keys, name, defaults) {
+    return keys.map((key) => {
       const label = document.createElement("label");
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
-      checkbox.name = "simulation-time-metric";
+      checkbox.name = name;
       checkbox.value = key;
-      checkbox.checked = ["accuracy", "effective_time", "rested_time"].includes(key);
+      checkbox.checked = defaults.includes(key);
       label.append(checkbox, document.createTextNode(fields.get(key).label));
       return label;
-    }));
+    });
+  }
+
+  function renderMetrics() {
+    input("simulation-time-metrics").replaceChildren(
+      ...metricCheckboxes(
+        config.timeMetrics,
+        "simulation-time-metric",
+        ["accuracy", "effective_time", "rested_time"],
+      ),
+    );
+  }
+
+  function renderDynamicMetrics() {
+    input("simulation-dynamic-metrics").replaceChildren(
+      ...metricCheckboxes(config.yFields, "simulation-dynamic-metric", ["accuracy"]),
+    );
   }
 
   function commonParams() {
@@ -79,7 +95,9 @@
   async function run() {
     if (!input("simulation-start").value || !input("simulation-end").value) throw new Error("Informe o período da análise.");
     const metrics = [...document.querySelectorAll('input[name="simulation-time-metric"]:checked')].map((item) => item.value);
+    const dynamicMetrics = [...document.querySelectorAll('input[name="simulation-dynamic-metric"]:checked')].map((item) => item.value);
     if (!metrics.length) throw new Error("Selecione ao menos um índice para o gráfico temporal.");
+    if (!dynamicMetrics.length) throw new Error("Selecione ao menos um índice para o eixo Y do gráfico dinâmico.");
     status.textContent = "Atualizando os dois gráficos…";
     status.classList.remove("error");
 
@@ -89,7 +107,7 @@
     timeParams.set("group_by", input("simulation-time-group").value);
     const dynamicParams = commonParams();
     dynamicParams.set("x", input("simulation-x").value);
-    dynamicParams.set("y", input("simulation-y").value);
+    dynamicMetrics.forEach((metric) => dynamicParams.append("y", metric));
     dynamicParams.set("aggregation", input("simulation-aggregation").value);
     dynamicParams.set("group_by", input("simulation-dynamic-group").value);
 
@@ -99,7 +117,8 @@
     ]);
     renderChart("simulation-time-chart", "simulation-time-empty", "simulation-time-legend", timeData);
     renderChart("simulation-dynamic-chart", "simulation-dynamic-empty", "simulation-dynamic-legend", dynamicData);
-    input("simulation-dynamic-title").textContent = `${dynamicData.y.label} por ${dynamicData.x.label.toLowerCase()}`;
+    const metricLabels = dynamicMetrics.map((metric) => fields.get(metric).label);
+    input("simulation-dynamic-title").textContent = `${metricLabels.join(" + ")} por ${dynamicData.x.label.toLowerCase()}`;
     status.textContent = "Análise atualizada.";
   }
 
@@ -109,10 +128,10 @@
     populate(input("simulation-period"), config.periods, "daily");
     populate(input("simulation-time-group"), config.groups, "none");
     populate(input("simulation-x"), fieldOptions(config.xFields), "subject");
-    populate(input("simulation-y"), fieldOptions(config.yFields), "accuracy");
     populate(input("simulation-aggregation"), config.aggregations, "avg");
     populate(input("simulation-dynamic-group"), config.groups, "none");
     renderMetrics();
+    renderDynamicMetrics();
     run().catch(showError);
   }
 

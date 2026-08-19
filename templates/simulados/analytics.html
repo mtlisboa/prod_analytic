@@ -31,10 +31,10 @@
       <div><p class="eyebrow">Gráfico inferior</p><h2>Comparação dinâmica</h2></div>
       <div class="builder-grid simulation-dynamic-controls">
         <div class="field"><label for="simulation-x">Eixo X</label><select id="simulation-x"></select></div>
-        <div class="field"><label for="simulation-y">Eixo Y</label><select id="simulation-y"></select></div>
         <div class="field"><label for="simulation-aggregation">Função</label><select id="simulation-aggregation"></select></div>
         <div class="field"><label for="simulation-dynamic-group">Separar linhas por</label><select id="simulation-dynamic-group"></select></div>
       </div>
+      <fieldset class="group-fields"><legend>Índices do eixo Y</legend><div id="simulation-dynamic-metrics" class="checkbox-grid"></div></fieldset>
     </div>
     <div class="form-actions"><button class="button primary" type="submit">Atualizar gráficos</button></div>
   </form>
@@ -47,7 +47,7 @@
 </section>
 
 <section class="panel chart-panel relation-panel">
-  <div class="panel-heading"><div><p class="eyebrow">Relação configurável</p><h2 id="simulation-dynamic-title">Aproveitamento por matéria</h2></div><span class="unit-chip">X e Y configuráveis</span></div>
+  <div class="panel-heading"><div><p class="eyebrow">Relação configurável</p><h2 id="simulation-dynamic-title">Aproveitamento por matéria</h2></div><span class="unit-chip">X e múltiplos Y configuráveis</span></div>
   <div id="simulation-dynamic-legend" class="chart-legend"></div>
   <div class="chart-wrap"><div id="simulation-dynamic-chart" class="line-chart" role="img" aria-label="Gráfico dinâmico dos simulados"></div><div id="simulation-dynamic-empty" class="empty-state chart-overlay">Carregando dados…</div></div>
 </section>
