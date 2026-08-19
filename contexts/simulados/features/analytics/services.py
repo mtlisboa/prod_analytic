@@ -75,27 +75,44 @@ def build_time_analysis(*, queryset, metrics, period, group_by):
     }
 
 
-def build_dynamic_analysis(*, queryset, x_field, y_field, aggregation, group_by):
-    groups = defaultdict(lambda: defaultdict(list))
+def build_dynamic_analysis(*, queryset, x_field, y_fields, aggregation, group_by):
+    groups = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for simulation in queryset:
         group = _group_value(simulation, group_by)
-        groups[group][_field_value(simulation, x_field)].append(_field_value(simulation, y_field))
+        x_value = _field_value(simulation, x_field)
+        for y_field in y_fields:
+            groups[group][y_field][x_value].append(_field_value(simulation, y_field))
 
     series = []
-    for group, values_by_x in groups.items():
-        points = [
-            {"x": x_value, "y": _aggregate(values, aggregation)}
-            for x_value, values in values_by_x.items()
-        ]
-        if FIELDS[x_field].kind == "number":
-            points.sort(key=lambda point: float(point["x"]))
-        series.append({"label": group, "points": points})
+    for group, metric_data in groups.items():
+        for y_field in y_fields:
+            values_by_x = metric_data[y_field]
+            points = [
+                {"x": x_value, "y": _aggregate(values, aggregation)}
+                for x_value, values in values_by_x.items()
+            ]
+            if FIELDS[x_field].kind == "number":
+                points.sort(key=lambda point: float(point["x"]))
 
-    y_definition = FIELDS[y_field]
-    y_label = "Quantidade de simulados" if aggregation == "count" else f"{AGGREGATIONS[aggregation]} de {y_definition.label.lower()}"
+            definition = FIELDS[y_field]
+            label = definition.label if group_by == "none" else f"{definition.label} · {group}"
+            series.append({"label": label, "points": points})
+
+    selected_definitions = [FIELDS[y_field] for y_field in y_fields]
+    units = {definition.unit for definition in selected_definitions}
+    if aggregation == "count":
+        y_label = "Quantidade de simulados"
+        y_unit = ""
+    elif len(selected_definitions) == 1:
+        y_label = f"{AGGREGATIONS[aggregation]} de {selected_definitions[0].label.lower()}"
+        y_unit = selected_definitions[0].unit
+    else:
+        y_label = "Métricas comparadas"
+        y_unit = units.pop() if len(units) == 1 else ""
+
     return {
         "x": FIELDS[x_field].__dict__,
-        "y": {"label": y_label, "unit": "" if aggregation == "count" else y_definition.unit, "kind": "number"},
+        "y": {"label": y_label, "unit": y_unit, "kind": "number"},
         "series": series,
     }
 
