@@ -23,6 +23,19 @@ Cada feature concentra seus próprios `forms`, `views`, `urls` e serviços. `con
 
 ## Executar com Docker
 
+Com Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+A aplicação ficará disponível em `http://localhost:8000`. O banco SQLite é mantido
+no volume nomeado `forge-data`, inclusive após recriar o container. Para executar
+em segundo plano, acrescente `--detach`. Para publicar em outra porta, defina
+`FORGE_PORT` (por exemplo, `FORGE_PORT=8080`).
+
+Também é possível construir e executar a imagem diretamente:
+
 ```bash
 docker build -t forge .
 docker volume create forge-data
@@ -38,7 +51,7 @@ No PowerShell, o mesmo comando pode ser escrito em uma única linha. A porta é 
 
 ## Deploy no Railway
 
-1. Envie o repositório ao GitHub e crie um serviço no Railway a partir dele. O Railway detectará o `Dockerfile` e construirá somente essa imagem; não há Docker Compose.
+1. Envie o repositório ao GitHub e crie um serviço no Railway a partir dele. O Railway detectará o `Dockerfile` e construirá essa imagem; o `docker-compose.yml` é destinado ao ambiente local.
 2. Crie um **Volume** e monte-o em `/data`. SQLite sem Volume é efêmero e pode perder dados em redeploys.
 3. Configure as variáveis:
 

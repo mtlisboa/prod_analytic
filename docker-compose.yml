@@ -1,0 +1,31 @@
+services:
+  web:
+    build:
+      context: .
+    image: forge:local
+    ports:
+      - "127.0.0.1:${FORGE_PORT:-8000}:8000"
+    environment:
+      DEBUG: "${FORGE_DEBUG:-true}"
+      SECRET_KEY: "${FORGE_SECRET_KEY:-local-development-key-change-before-deploy}"
+      ALLOWED_HOSTS: "${FORGE_ALLOWED_HOSTS:-localhost,127.0.0.1}"
+      CSRF_TRUSTED_ORIGINS: "http://localhost:${FORGE_PORT:-8000}"
+      DATABASE_PATH: /data/forge.sqlite3
+      PORT: "8000"
+    volumes:
+      - forge-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import os, urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:' + os.getenv('PORT', '8000') + '/health/', timeout=5)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  forge-data:

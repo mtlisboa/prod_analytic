@@ -53,7 +53,8 @@ class AcademiaFlowTests(TestCase):
         self.assertContains(response, reverse("analytics_graphql:endpoint"))
         self.assertContains(response, 'id="analysis-fields"')
         self.assertContains(response, 'id="x-function"')
-        self.assertContains(response, 'id="y-function"')
+        self.assertContains(response, 'id="comparison-lines"')
+        self.assertContains(response, 'id="add-comparison-line"')
 
     def test_graphql_endpoint_requires_authentication(self):
         self.client.logout()
@@ -129,6 +130,44 @@ class AcademiaFlowTests(TestCase):
         self.assertEqual(comparison["x"]["kind"], "number")
         self.assertEqual(comparison["y"]["label"], "Média de Força / carga")
         self.assertEqual(comparison["series"], [{"label": "Supino", "points": [{"x": 1, "y": 80.0}]}])
+
+    def test_graphql_comparison_accepts_multiple_y_lines(self):
+        record = TrainingRecord.objects.create(user=self.user, exercise=self.exercise)
+        TrainingSet.objects.create(
+            training_record=record, position=1, performed_at=timezone.now(),
+            weight_kg=80, execution_time_seconds=40, rest_time_seconds=60,
+        )
+        TrainingSet.objects.create(
+            training_record=record, position=2, performed_at=timezone.now(),
+            weight_kg=90, execution_time_seconds=45, rest_time_seconds=75,
+        )
+        today = timezone.localdate().isoformat()
+        response = self._graphql("""
+            query($input: ComparisonAnalysisInput!) {
+              comparisonAnalysis(input: $input) {
+                y { label kind }
+                series { label points { x y } }
+              }
+            }
+        """, {"input": {
+            "startDate": today, "endDate": today,
+            "x": {"field": "SET_POSITION", "function": "RAW"},
+            "lines": [
+                {"field": "WEIGHT", "function": "RAW"},
+                {"field": "REST", "function": "RAW"},
+            ],
+            "groupBy": ["EXERCISE"], "exerciseIds": [], "techniqueId": None,
+        }})
+        self.assertEqual(response.status_code, 200)
+        comparison = response.json()["data"]["comparisonAnalysis"]
+        self.assertEqual(comparison["y"], {"label": "Valores", "kind": "number"})
+        self.assertEqual([item["label"] for item in comparison["series"]], [
+            "Força / carga · Supino", "Tempo de descanso · Supino",
+        ])
+        self.assertEqual(
+            [[point["y"] for point in item["points"]] for item in comparison["series"]],
+            [[80.0, 90.0], [60, 75]],
+        )
 
     def test_user_cannot_select_another_users_exercise(self):
         private_exercise = Exercise.objects.create(user=self.other, name="Agachamento", muscle_group="legs")

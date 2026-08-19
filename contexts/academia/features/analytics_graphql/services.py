@@ -136,9 +136,35 @@ def build_time_analysis(*, user, start_date, end_date, period, lines, group_by, 
     }
 
 
-def build_comparison_analysis(*, user, start_date, end_date, x, y, group_by, exercise_ids=None, technique_id=None):
+def _comparison_points(items, x, y):
+    if x.function is Aggregation.RAW and y.function is Aggregation.RAW:
+        return [{"x": _value(item, x.field), "y": _value(item, y.field)} for item in items]
+    if x.function is Aggregation.RAW:
+        buckets = defaultdict(list)
+        for item in items:
+            buckets[str(_value(item, x.field))].append(item)
+        return [
+            {"x": _value(bucket[0], x.field), "y": _aggregate([_value(item, y.field) for item in bucket], y.function)}
+            for bucket in buckets.values()
+        ]
+    if y.function is Aggregation.RAW:
+        buckets = defaultdict(list)
+        for item in items:
+            buckets[str(_value(item, y.field))].append(item)
+        return [
+            {"x": _aggregate([_value(item, x.field) for item in bucket], x.function), "y": _value(bucket[0], y.field)}
+            for bucket in buckets.values()
+        ]
+    return [{
+        "x": _aggregate([_value(item, x.field) for item in items], x.function),
+        "y": _aggregate([_value(item, y.field) for item in items], y.function),
+    }]
+
+
+def build_comparison_analysis(*, user, start_date, end_date, x, lines, group_by, exercise_ids=None, technique_id=None):
     _validate(x.field, x.function)
-    _validate(y.field, y.function)
+    for line in lines:
+        _validate(line.field, line.function)
     records = list(_querysets(
         user=user, start_date=start_date, end_date=end_date,
         exercise_ids=exercise_ids, technique_id=technique_id,
@@ -148,30 +174,16 @@ def build_comparison_analysis(*, user, start_date, end_date, x, y, group_by, exe
         line_groups[_group_label(training_set, group_by)].append(training_set)
 
     series = []
-    for label, items in line_groups.items():
-        points = []
-        if x.function is Aggregation.RAW and y.function is Aggregation.RAW:
-            points = [{"x": _value(item, x.field), "y": _value(item, y.field)} for item in items]
-        elif x.function is Aggregation.RAW:
-            buckets = defaultdict(list)
-            for item in items:
-                buckets[str(_value(item, x.field))].append(item)
-            points = [
-                {"x": _value(bucket[0], x.field), "y": _aggregate([_value(item, y.field) for item in bucket], y.function)}
-                for bucket in buckets.values()
-            ]
-        elif y.function is Aggregation.RAW:
-            buckets = defaultdict(list)
-            for item in items:
-                buckets[str(_value(item, y.field))].append(item)
-            points = [
-                {"x": _aggregate([_value(item, x.field) for item in bucket], x.function), "y": _value(bucket[0], y.field)}
-                for bucket in buckets.values()
-            ]
-        else:
-            points = [{
-                "x": _aggregate([_value(item, x.field) for item in items], x.function),
-                "y": _aggregate([_value(item, y.field) for item in items], y.function),
-            }]
-        series.append({"label": label, "points": points})
-    return {"x": _axis(x.field, x.function), "y": _axis(y.field, y.function), "series": series}
+    multiple_lines = len(lines) > 1
+    for line in lines:
+        line_axis = _axis(line.field, line.function)
+        for group_label, items in line_groups.items():
+            label = line_axis["label"] if multiple_lines else group_label
+            if group_by and multiple_lines:
+                label = f'{line_axis["label"]} · {group_label}'
+            series.append({"label": label, "points": _comparison_points(items, x, line)})
+
+    y_axis = _axis(lines[0].field, lines[0].function) if len(lines) == 1 else {
+        "label": "Valores", "unit": "", "kind": "number",
+    }
+    return {"x": _axis(x.field, x.function), "y": y_axis, "series": series}

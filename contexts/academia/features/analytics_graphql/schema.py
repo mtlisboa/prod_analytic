@@ -85,7 +85,8 @@ class ComparisonAnalysisInput:
     start_date: date
     end_date: date
     x: AxisInput
-    y: AxisInput
+    y: AxisInput | None = None
+    lines: list[AxisInput] = strawberry.field(default_factory=list)
     group_by: list[AnalyticsField] = strawberry.field(default_factory=list)
     exercise_ids: list[strawberry.ID] | None = None
     technique_id: strawberry.ID | None = None
@@ -146,11 +147,14 @@ class Query:
         )
         return _chart_result(payload)
 
-    @strawberry.field(description="Compara dois campos com funções independentes e múltiplas classes de agrupamento.")
+    @strawberry.field(description="Compara um eixo X com várias linhas Y e múltiplas classes de agrupamento.")
     def comparison_analysis(self, info: Info, input: ComparisonAnalysisInput) -> ChartResult:
+        lines = input.lines or ([input.y] if input.y else [])
+        if not lines:
+            raise ValueError("Adicione ao menos uma linha ao eixo Y.")
         payload = build_comparison_analysis(
             user=_user(info), start_date=input.start_date, end_date=input.end_date,
-            x=input.x, y=input.y, group_by=input.group_by,
+            x=input.x, lines=lines, group_by=input.group_by,
             exercise_ids=_exercise_ids(input.exercise_ids),
             technique_id=int(input.technique_id) if input.technique_id else None,
         )
