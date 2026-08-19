@@ -39,6 +39,14 @@ def _value(training_set, field):
         return training_set.position
     if field is AnalyticsField.WEIGHT:
         return float(training_set.weight_kg)
+    if field is AnalyticsField.REPS:
+        return training_set.reps
+    if field is AnalyticsField.PARTIAL_REPS:
+        return training_set.partial_reps
+    if field is AnalyticsField.PARTIAL_REPS_RATIO:
+        return round((training_set.partial_reps / training_set.reps) * 100, 2) if training_set.reps else 0
+    if field is AnalyticsField.NON_PARTIAL_REPS:
+        return training_set.reps - training_set.partial_reps
     if field is AnalyticsField.EXECUTION:
         return training_set.execution_time_seconds
     if field is AnalyticsField.REST:

@@ -70,18 +70,23 @@ class AcademiaFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()["data"]
         self.assertIn("WEIGHT", [item["key"] for item in data["analysisFields"]])
+        field_keys = [item["key"] for item in data["analysisFields"]]
+        self.assertIn("REPS", field_keys)
+        self.assertIn("PARTIAL_REPS", field_keys)
+        self.assertIn("PARTIAL_REPS_RATIO", field_keys)
+        self.assertIn("NON_PARTIAL_REPS", field_keys)
         self.assertEqual([item["name"] for item in data["analysisCatalog"]["exercises"]], ["Supino"])
 
     def test_graphql_time_analysis_accepts_multiple_lines_and_classes(self):
         record = TrainingRecord.objects.create(user=self.user, exercise=self.exercise)
         TrainingSet.objects.create(
             training_record=record, position=1, performed_at=timezone.now(),
-            weight_kg=80, execution_time_seconds=40, rest_time_seconds=60,
+            weight_kg=80, reps=8, partial_reps=2, execution_time_seconds=40, rest_time_seconds=60,
             advanced_technique=self.technique,
         )
         TrainingSet.objects.create(
             training_record=record, position=2, performed_at=timezone.now(),
-            weight_kg=90, execution_time_seconds=42, rest_time_seconds=90,
+            weight_kg=90, reps=10, partial_reps=4, execution_time_seconds=42, rest_time_seconds=90,
             advanced_technique=self.technique,
         )
         today = timezone.localdate().isoformat()
@@ -93,7 +98,11 @@ class AcademiaFlowTests(TestCase):
             "startDate": today, "endDate": today, "period": "DAILY",
             "lines": [
                 {"field": "WEIGHT", "function": "AVG"},
-                {"field": "REST", "function": "SUM"}
+                {"field": "REST", "function": "SUM"},
+                {"field": "REPS", "function": "SUM"},
+                {"field": "PARTIAL_REPS", "function": "SUM"},
+                {"field": "PARTIAL_REPS_RATIO", "function": "AVG"},
+                {"field": "NON_PARTIAL_REPS", "function": "SUM"}
             ],
             "groupBy": ["EXERCISE", "TECHNIQUE"],
             "exerciseIds": [], "techniqueId": None,
@@ -103,8 +112,15 @@ class AcademiaFlowTests(TestCase):
         self.assertEqual([item["label"] for item in series], [
             "Média de Força / carga · Supino · Drop set",
             "Soma de Tempo de descanso · Supino · Drop set",
+            "Soma de Repetições totais · Supino · Drop set",
+            "Soma de Repetições parciais · Supino · Drop set",
+            "Média de Repetições parciais / total · Supino · Drop set",
+            "Soma de Repetições totais - parciais · Supino · Drop set",
         ])
-        self.assertEqual([item["points"][0]["y"] for item in series], [85.0, 150.0])
+        self.assertEqual(
+            [item["points"][0]["y"] for item in series],
+            [85.0, 150.0, 18.0, 6.0, 32.5, 12.0],
+        )
 
     def test_graphql_comparison_has_independent_axis_functions(self):
         record = TrainingRecord.objects.create(user=self.user, exercise=self.exercise)

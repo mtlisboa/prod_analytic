@@ -9,6 +9,10 @@ class AnalyticsField(Enum):
     EXERCISE = "exercise"
     SET_POSITION = "set_position"
     WEIGHT = "weight"
+    REPS = "reps"
+    PARTIAL_REPS = "partial_reps"
+    PARTIAL_REPS_RATIO = "partial_reps_ratio"
+    NON_PARTIAL_REPS = "non_partial_reps"
     EXECUTION = "execution"
     REST = "rest"
     TECHNIQUE = "technique"
@@ -51,6 +55,10 @@ FIELDS = {
     AnalyticsField.EXERCISE: FieldDefinition("Exercício", "CATEGORY", "", CATEGORY_FUNCTIONS, True),
     AnalyticsField.SET_POSITION: FieldDefinition("Número da série", "NUMBER", "série", NUMERIC_FUNCTIONS, True),
     AnalyticsField.WEIGHT: FieldDefinition("Força / carga", "NUMBER", "kg", NUMERIC_FUNCTIONS),
+    AnalyticsField.REPS: FieldDefinition("Repetições totais", "NUMBER", "repetições", NUMERIC_FUNCTIONS),
+    AnalyticsField.PARTIAL_REPS: FieldDefinition("Repetições parciais", "NUMBER", "repetições", NUMERIC_FUNCTIONS),
+    AnalyticsField.PARTIAL_REPS_RATIO: FieldDefinition("Repetições parciais / total", "NUMBER", "%", NUMERIC_FUNCTIONS),
+    AnalyticsField.NON_PARTIAL_REPS: FieldDefinition("Repetições totais - parciais", "NUMBER", "repetições", NUMERIC_FUNCTIONS),
     AnalyticsField.EXECUTION: FieldDefinition("Tempo de execução", "NUMBER", "s", NUMERIC_FUNCTIONS),
     AnalyticsField.REST: FieldDefinition("Tempo de descanso", "NUMBER", "s", NUMERIC_FUNCTIONS),
     AnalyticsField.TECHNIQUE: FieldDefinition("Técnica", "CATEGORY", "", CATEGORY_FUNCTIONS, True),
