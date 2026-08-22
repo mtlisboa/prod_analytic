@@ -8,14 +8,27 @@ from django.utils import timezone
 
 from contexts.academia.features.training.models import TrainingRecord, TrainingSet
 
+
 @login_required
 def dashboard(request):
     today = timezone.localdate()
-    recent_records = TrainingRecord.objects.filter(user=request.user).select_related("exercise").prefetch_related("sets__advanced_technique").annotate(set_total=Count("sets"), avg_weight=Avg("sets__weight_kg"))[:8]
-    today_totals = TrainingSet.objects.filter(training_record__user=request.user, performed_at__date=today).aggregate(
-        sets=Count("id"), execution=Sum("execution_time_seconds"), rest=Sum("rest_time_seconds")
+    records = (
+        TrainingRecord.objects
+        .filter(user=request.user)
+        .select_related("exercise")
+        .prefetch_related("sets__advanced_technique")
+        .annotate(set_total=Count("sets"), avg_weight=Avg("sets__weight_kg"))
+        .order_by("-created_at")
     )
-    total_records = TrainingRecord.objects.filter(user=request.user).count()
+    today_totals = TrainingSet.objects.filter(
+        training_record__user=request.user,
+        performed_at__date=today,
+    ).aggregate(
+        sets=Count("id"),
+        execution=Sum("execution_time_seconds"),
+        rest=Sum("rest_time_seconds"),
+    )
+    total_records = records.count()
 
     return render(request, "academia/dashboard.html", {
         "analysis_config": json.dumps({
@@ -23,7 +36,7 @@ def dashboard(request):
             "startDate": today.replace(day=1).isoformat(),
             "endDate": today.isoformat(),
         }),
-        "recent_records": recent_records,
+        "recent_records": records,
         "today_totals": today_totals,
         "total_records": total_records,
     })
