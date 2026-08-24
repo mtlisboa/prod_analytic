@@ -36,6 +36,7 @@
         <a href="{% url 'simulados:goal_create' %}">Nova meta</a>
       {% elif request.resolver_match.namespace == 'academia' %}
         <a href="{% url 'academia:dashboard' %}">Análise</a>
+        <a href="{% url 'academia:training_list' %}">Treinos</a>
         <a href="{% url 'academia:training_create' %}">Registrar treino</a>
         <a href="{% url 'academia:exercise_list' %}">Exercícios</a>
         <a href="{% url 'academia:technique_list' %}">Técnicas</a>

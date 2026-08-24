@@ -66,20 +66,10 @@
 </section>
 
 <section class="panel table-panel recent-panel">
-  <div class="panel-heading"><div><p class="eyebrow">Histórico</p><h2>Todos os treinos</h2></div></div>
+  <div class="panel-heading"><div><p class="eyebrow">Histórico recente</p><h2>Treinos dos últimos 5 dias</h2></div><a class="input-tool" href="{% url 'academia:training_list' %}">Ver todos</a></div>
   <div class="table-scroll">
     <table><thead><tr><th>Data</th><th>Exercício</th><th>Séries</th><th>Peso/série</th><th>Técnica</th><th>Ações</th></tr></thead>
-    <tbody id="training-history-rows">{% include "academia/_training_history_rows.html" with records=history_page.object_list empty_message=True %}</tbody></table>
-  </div>
-  <div
-    id="training-history-loader"
-    class="history-loader"
-    data-url="{% url 'academia:training_history' %}"
-    data-next-page="{% if history_page.has_next %}{{ history_page.next_page_number }}{% endif %}"
-    {% if not history_page.has_next %}hidden{% endif %}
-  >
-    <button class="button secondary" type="button">Carregar mais treinos</button>
-    <span role="status" aria-live="polite"></span>
+    <tbody>{% include "academia/_training_history_rows.html" with records=recent_records empty_message="Nenhum treino realizado nos últimos 5 dias." %}</tbody></table>
   </div>
 </section>
 {% endblock %}
@@ -87,5 +77,4 @@
 <script>window.FORGE_ANALYTICS={{ analysis_config|safe }};</script>
 <script src="{% static 'js/chart.js' %}"></script>
 <script src="{% static 'js/analytics-builder.js' %}"></script>
-<script src="{% static 'js/training-history.js' %}"></script>
 {% endblock %}

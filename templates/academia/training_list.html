@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Treinos — Forge{% endblock %}
+{% block content %}
+<header class="page-heading">
+  <div><p class="eyebrow">Módulo de treinos</p><h1>Treinos registrados</h1><p>Busque, edite ou exclua qualquer treino do seu histórico.</p></div>
+  <a class="button primary" href="{% url 'academia:training_create' %}">+ Registrar treino</a>
+</header>
+
+<section class="panel table-panel">
+  <div class="panel-heading history-heading">
+    <div><p class="eyebrow">Histórico completo</p><h2>Todos os treinos</h2></div>
+    <div class="field history-search-field">
+      <label for="training-history-search">Buscar treino</label>
+      <input id="training-history-search" type="search" autocomplete="off" placeholder="Digite o nome do exercício">
+    </div>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Data</th><th>Exercício</th><th>Séries</th><th>Peso/série</th><th>Técnica</th><th>Ações</th></tr></thead>
+      <tbody id="training-history-rows">{% include "academia/_training_history_rows.html" with records=history_page.object_list empty_message="Seu histórico aparecerá aqui." %}</tbody>
+    </table>
+  </div>
+  <div
+    id="training-history-loader"
+    class="history-loader"
+    data-url="{% url 'academia:training_history' %}"
+    data-next-page="{% if history_page.has_next %}{{ history_page.next_page_number }}{% endif %}"
+    {% if not history_page.has_next %}hidden{% endif %}
+  >
+    <button class="button secondary" type="button">Carregar mais treinos</button>
+    <span role="status" aria-live="polite"></span>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/training-history.js' %}"></script>{% endblock %}

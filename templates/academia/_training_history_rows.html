@@ -15,5 +15,5 @@
   </td>
 </tr>
 {% empty %}
-  {% if empty_message %}<tr><td colspan="6">Seu histórico aparecerá aqui.</td></tr>{% endif %}
+  {% if empty_message %}<tr><td colspan="6">{{ empty_message }}</td></tr>{% endif %}
 {% endfor %}

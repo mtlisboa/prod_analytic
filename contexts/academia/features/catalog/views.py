@@ -9,16 +9,26 @@ from .models import AdvancedTechnique, Exercise
 
 @login_required
 def exercise_list(request):
+    query = request.GET.get("q", "").strip()[:100]
+    items = request.user.exercises.all()
+    if query:
+        items = items.filter(name__icontains=query)
     return render(request, "academia/catalog_list.html", {
-        "items": request.user.exercises.all(), "kind": "exercise",
+        "items": items, "kind": "exercise", "search_query": query,
+        "search_placeholder": "Buscar exercício pelo nome",
         "title": "Exercícios", "create_url": "academia:exercise_create",
     })
 
 
 @login_required
 def technique_list(request):
+    query = request.GET.get("q", "").strip()[:100]
+    items = request.user.advanced_techniques.all()
+    if query:
+        items = items.filter(name__icontains=query)
     return render(request, "academia/catalog_list.html", {
-        "items": request.user.advanced_techniques.all(), "kind": "technique",
+        "items": items, "kind": "technique", "search_query": query,
+        "search_placeholder": "Buscar técnica pelo nome",
         "title": "Técnicas avançadas", "create_url": "academia:technique_create",
     })
 

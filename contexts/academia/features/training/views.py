@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, Paginator
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .forms import (
@@ -11,6 +13,45 @@ from .forms import (
     TrainingSetUpdateFormSet,
 )
 from .models import TrainingRecord
+from .queries import HISTORY_PAGE_SIZE, training_history_queryset
+
+
+@login_required
+def training_list(request):
+    records = training_history_queryset(request.user)
+    history_page = Paginator(records, HISTORY_PAGE_SIZE).get_page(1)
+    return render(request, "academia/training_list.html", {"history_page": history_page})
+
+
+@login_required
+def training_history(request):
+    query = request.GET.get("q", "").strip()[:100]
+    paginator = Paginator(training_history_queryset(request.user, query), HISTORY_PAGE_SIZE)
+    try:
+        page_number = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        return JsonResponse({"detail": "Página inválida."}, status=400)
+
+    if page_number < 1:
+        return JsonResponse({"detail": "Página inválida."}, status=400)
+
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return JsonResponse({"html": "", "has_next": False, "next_page": None})
+
+    return JsonResponse({
+        "html": render_to_string(
+            "academia/_training_history_rows.html",
+            {
+                "records": page.object_list,
+                "empty_message": "Nenhum treino encontrado para esta busca.",
+            },
+            request=request,
+        ),
+        "has_next": page.has_next(),
+        "next_page": page.next_page_number() if page.has_next() else None,
+    })
 
 
 @login_required

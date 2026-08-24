@@ -6,6 +6,14 @@
   <a class="button primary" href="{% url create_url %}">+ Adicionar</a>
 </header>
 <section class="panel table-panel">
+  <form class="catalog-search" method="get" role="search">
+    <div class="field">
+      <label for="catalog-search-input">Buscar em {{ title|lower }}</label>
+      <input id="catalog-search-input" name="q" type="search" value="{{ search_query }}" placeholder="{{ search_placeholder }}" autocomplete="off">
+    </div>
+    <button class="button secondary" type="submit">Buscar</button>
+    {% if search_query %}<a class="input-tool" href="{% if kind == 'exercise' %}{% url 'academia:exercise_list' %}{% else %}{% url 'academia:technique_list' %}{% endif %}">Limpar</a>{% endif %}
+  </form>
   <div class="table-scroll">
     <table>
       <thead><tr><th>Nome</th><th>Detalhes</th><th>Ações</th></tr></thead>
@@ -24,7 +32,7 @@
             {% endif %}
           </td>
         </tr>
-      {% empty %}<tr><td colspan="3">Nenhum item cadastrado.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="3">{% if search_query %}Nenhum resultado encontrado para “{{ search_query }}”.{% else %}Nenhum item cadastrado.{% endif %}</td></tr>{% endfor %}
       </tbody>
     </table>
   </div>
