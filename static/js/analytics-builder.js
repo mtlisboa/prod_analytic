@@ -35,9 +35,13 @@
   const comparisonLines = document.getElementById("comparison-lines");
   const startInput = document.getElementById("analysis-start");
   const endInput = document.getElementById("analysis-end");
-  const exerciseInput = document.getElementById("analysis-exercises");
+  const exerciseSearchInput = document.getElementById("analysis-exercise-search");
+  const exerciseResults = document.getElementById("analysis-exercise-results");
+  const selectedExercisesContainer = document.getElementById("analysis-selected-exercises");
   const techniqueInput = document.getElementById("analysis-technique");
   let fields = [];
+  let exercises = [];
+  const selectedExercises = new Set();
 
   async function graphql(query, variables = {}) {
     const response = await fetch(config.endpoint, {
@@ -141,8 +145,79 @@
   }
 
   function selectedExerciseIds() {
-    const ids = [...exerciseInput.selectedOptions].map((item) => item.value);
-    return ids.length ? ids : null;
+    return [...selectedExercises];
+  }
+
+  function normalizeSearch(value) {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  }
+
+  function closeExerciseResults() {
+    exerciseResults.hidden = true;
+    exerciseSearchInput.setAttribute("aria-expanded", "false");
+  }
+
+  function renderSelectedExercises() {
+    if (!selectedExercises.size) {
+      const all = document.createElement("span");
+      all.className = "selected-exercises-empty";
+      all.textContent = "Todos os exercícios";
+      selectedExercisesContainer.replaceChildren(all);
+      return;
+    }
+
+    selectedExercisesContainer.replaceChildren(...[...selectedExercises].map((id) => {
+      const exercise = exercises.find((item) => String(item.id) === id);
+      const chip = document.createElement("span");
+      chip.className = "selected-exercise-chip";
+      chip.append(document.createTextNode(exercise?.name || id));
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.setAttribute("aria-label", `Remover ${exercise?.name || "exercício"} do filtro`);
+      remove.textContent = "×";
+      remove.addEventListener("click", () => {
+        selectedExercises.delete(id);
+        renderSelectedExercises();
+        renderExerciseResults(exerciseSearchInput.value);
+      });
+      chip.append(remove);
+      return chip;
+    }));
+  }
+
+  function addExercise(id) {
+    selectedExercises.add(String(id));
+    exerciseSearchInput.value = "";
+    closeExerciseResults();
+    renderSelectedExercises();
+    exerciseSearchInput.focus();
+  }
+
+  function renderExerciseResults(query = "") {
+    const normalizedQuery = normalizeSearch(query.trim());
+    const matches = exercises
+      .filter((item) => !selectedExercises.has(String(item.id)))
+      .filter((item) => !normalizedQuery || normalizeSearch(item.name).includes(normalizedQuery))
+      .slice(0, 12);
+
+    if (!matches.length) {
+      const message = document.createElement("div");
+      message.className = "exercise-search-status";
+      message.textContent = exercises.length ? "Nenhum exercício disponível." : "Nenhum exercício cadastrado.";
+      exerciseResults.replaceChildren(message);
+    } else {
+      exerciseResults.replaceChildren(...matches.map((exercise) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "exercise-result";
+        button.setAttribute("role", "option");
+        button.textContent = exercise.name;
+        button.addEventListener("click", () => addExercise(exercise.id));
+        return button;
+      }));
+    }
+    exerciseResults.hidden = false;
+    exerciseSearchInput.setAttribute("aria-expanded", "true");
   }
 
   function lineInputs(container) {
@@ -236,7 +311,8 @@
         card.append(title, meta, functions);
         return card;
       }));
-      exerciseInput.replaceChildren(...data.analysisCatalog.exercises.map((item) => option(item.id, item.name)));
+      exercises = data.analysisCatalog.exercises;
+      renderSelectedExercises();
       techniqueInput.append(...data.analysisCatalog.techniques.map((item) => option(item.id, item.name)));
       startInput.value = config.startDate;
       endInput.value = config.endDate;
@@ -263,6 +339,21 @@
 
   document.getElementById("add-time-line").addEventListener("click", () => createTimeLine());
   document.getElementById("add-comparison-line").addEventListener("click", () => createComparisonLine());
+  exerciseSearchInput.addEventListener("input", () => renderExerciseResults(exerciseSearchInput.value));
+  exerciseSearchInput.addEventListener("focus", () => renderExerciseResults(exerciseSearchInput.value));
+  exerciseSearchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeExerciseResults();
+    if (event.key === "Enter" && !exerciseResults.hidden) {
+      const firstResult = exerciseResults.querySelector("button");
+      if (firstResult) {
+        event.preventDefault();
+        firstResult.click();
+      }
+    }
+  });
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".analysis-exercise-filter")) closeExerciseResults();
+  });
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {

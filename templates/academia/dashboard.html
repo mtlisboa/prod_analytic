@@ -22,7 +22,15 @@
     <div class="builder-grid shared-filters">
       <div class="field"><label for="analysis-start">De</label><input id="analysis-start" type="date" required></div>
       <div class="field"><label for="analysis-end">Até</label><input id="analysis-end" type="date" required></div>
-      <div class="field"><label for="analysis-exercises">Filtrar exercícios (opcional)</label><select id="analysis-exercises" multiple></select><small>Nenhum selecionado = todos os exercícios.</small></div>
+      <div class="field analysis-exercise-filter">
+        <label for="analysis-exercise-search">Filtrar exercícios (opcional)</label>
+        <div class="exercise-combobox">
+          <input id="analysis-exercise-search" type="search" autocomplete="off" placeholder="Pesquise um exercício para adicionar" aria-autocomplete="list" aria-controls="analysis-exercise-results" aria-expanded="false">
+          <div id="analysis-exercise-results" class="exercise-results" role="listbox" hidden></div>
+        </div>
+        <div id="analysis-selected-exercises" class="selected-exercises" aria-live="polite"></div>
+        <small>Lista vazia = todos os exercícios selecionados.</small>
+      </div>
       <div class="field"><label for="analysis-technique">Filtrar técnica</label><select id="analysis-technique"><option value="">Todas</option></select></div>
     </div>
 
