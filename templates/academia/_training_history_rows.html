@@ -1,0 +1,19 @@
+{% for record in records %}
+<tr>
+  <td>{{ record.performed_at_sort|date:"d/m/Y H:i" }}</td>
+  <td><strong>{{ record.exercise.name }}</strong></td>
+  <td>{{ record.set_total }}</td>
+  <td>{{ record.avg_weight|floatformat:2 }} kg</td>
+  <td>
+    {% for item in record.sets.all %}
+      {% if item.advanced_technique %}{{ item.advanced_technique.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+    {% empty %}—{% endfor %}
+  </td>
+  <td class="row-actions">
+    <a class="input-tool" href="{% url 'academia:training_update' record.pk %}">Editar</a>
+    <a class="input-tool danger" href="{% url 'academia:training_delete' record.pk %}">Excluir</a>
+  </td>
+</tr>
+{% empty %}
+  {% if empty_message %}<tr><td colspan="6">Seu histórico aparecerá aqui.</td></tr>{% endif %}
+{% endfor %}

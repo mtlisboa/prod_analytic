@@ -13,6 +13,10 @@
   function visibleCards() { return [...list.querySelectorAll("[data-set-form]")].filter(card => !card.classList.contains("removed")); }
   function renumber() { visibleCards().forEach((card, index) => { card.querySelector("[name$='-position']").value = index + 1; card.querySelector(".set-number").textContent = `Série ${index + 1}`; }); }
   function summary(card) {
+    if (card.dataset.hasErrors === "true") {
+      card.querySelector("[data-summary]").textContent = "Corrija os campos desta série";
+      return;
+    }
     const value = suffix => card.querySelector(`[name$='-${suffix}']`)?.value;
     const partial = Number(value("partial_reps") || 0);
     const repsText = `${value("reps") || 0} reps${partial ? ` (${partial} parciais)` : ""}`;
@@ -107,16 +111,19 @@
   }
 
   function close(save) {
-    if (activeCard) {
-      pauseTimer(activeCard, "execution");
-      pauseTimer(activeCard, "rest");
-    }
+    if (!activeCard) return;
+    pauseTimer(activeCard, "execution");
+    pauseTimer(activeCard, "rest");
     if (!save && snapshot) [...modalFields.querySelectorAll("input,select")].forEach((field, i) => { field.value = snapshot[i]; });
     while (modalFields.firstChild) activeCard.querySelector(".set-fields").append(modalFields.firstChild);
-    if (save) summary(activeCard);
+    if (save) {
+      delete activeCard.dataset.hasErrors;
+      activeCard.classList.remove("has-errors");
+      summary(activeCard);
+    }
     executionTimerStates.delete(activeCard);
     restTimerStates.delete(activeCard);
-    modal.close();
+    if (modal.open) modal.close();
     activeCard = null;
   }
 
@@ -181,12 +188,14 @@
   modal.querySelector(".modal-cancel").onclick = () => close(false);
   modal.querySelector(".modal-close").onclick = () => close(false);
   modal.addEventListener("cancel", event => { event.preventDefault(); close(false); });
+
   trainingForm?.addEventListener("submit", () => {
-    if (!activeCard) return;
-    pauseTimer(activeCard, "execution");
-    pauseTimer(activeCard, "rest");
+    if (activeCard) close(true);
   });
 
   visibleCards().forEach(summary);
   renumber();
+
+  const firstInvalidCard = list.querySelector("[data-has-errors='true']");
+  if (firstInvalidCard) open(firstInvalidCard);
 })();

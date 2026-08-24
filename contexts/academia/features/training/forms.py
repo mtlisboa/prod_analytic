@@ -79,7 +79,10 @@ class TrainingSetForm(forms.ModelForm):
 
 
 TrainingSetCreateFormSet = inlineformset_factory(
-    TrainingRecord, TrainingSet, form=TrainingSetForm, extra=1,
+    # The create view supplies the single initial set. Keeping ``extra`` at 1
+    # rendered a second blank form; the JavaScript renumbered it and Django
+    # consequently treated it as changed, rejecting the whole submission.
+    TrainingRecord, TrainingSet, form=TrainingSetForm, extra=0,
     min_num=1, validate_min=True, can_delete=True,
 )
 

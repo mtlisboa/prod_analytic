@@ -49,7 +49,13 @@ def create_training(request):
         form_kwargs={"user": request.user},
         initial=initial if request.method != "POST" else None,
     )
-    if request.method == "POST" and form.is_valid() and formset.is_valid():
+    if request.method == "POST":
+        form_is_valid = form.is_valid()
+        formset_is_valid = formset.is_valid()
+    else:
+        form_is_valid = formset_is_valid = False
+
+    if form_is_valid and formset_is_valid:
         with transaction.atomic():
             record = form.save(commit=False)
             record.user = request.user
@@ -69,7 +75,13 @@ def update_training(request, pk):
         request.POST or None, instance=record, prefix="sets",
         form_kwargs={"user": request.user},
     )
-    if request.method == "POST" and form.is_valid() and formset.is_valid():
+    if request.method == "POST":
+        form_is_valid = form.is_valid()
+        formset_is_valid = formset.is_valid()
+    else:
+        form_is_valid = formset_is_valid = False
+
+    if form_is_valid and formset_is_valid:
         with transaction.atomic():
             form.save()
             formset.save()
