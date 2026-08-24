@@ -1,6 +1,9 @@
 (() => {
-  const field = document.querySelector("[data-exercise-search-url]");
+  function initializeExerciseSearch(root = document) {
+  const field = root.querySelector("[data-exercise-search-url]");
   if (!field) return;
+  if (field.dataset.exerciseSearchInitialized === "true") return;
+  field.dataset.exerciseSearchInitialized = "true";
 
   const select = field.querySelector("select");
   const input = field.querySelector("#exercise-search");
@@ -72,4 +75,8 @@
   });
   input.addEventListener("focus", () => { if (input.value.trim() && !select.value) search(input.value.trim()); });
   document.addEventListener("click", event => { if (!field.contains(event.target)) closeResults(); });
+  }
+
+  window.FORGE_INIT_EXERCISE_SEARCH = initializeExerciseSearch;
+  initializeExerciseSearch();
 })();

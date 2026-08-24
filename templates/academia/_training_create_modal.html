@@ -1,0 +1,7 @@
+{% if enabled %}
+<div id="training-create-modal" class="training-create-modal" role="dialog" aria-modal="true" aria-labelledby="training-modal-title" hidden>
+  <div class="training-create-modal-card"><div class="training-create-modal-body">
+    {% include "academia/_training_form_content.html" with editing=False modal=True %}
+  </div></div>
+</div>
+{% endif %}

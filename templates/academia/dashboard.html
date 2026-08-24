@@ -4,7 +4,7 @@
 {% block content %}
 <header class="page-heading">
   <div><p class="eyebrow">Visão de performance</p><h1>Olá, {{ user.username }}.</h1><p>Consistência transformada em dados claros.</p></div>
-  <a class="button primary" href="{% url 'academia:training_create' %}">+ Registrar treino</a>
+  <a class="button primary" href="{% url 'academia:training_create' %}" data-training-modal-open>+ Registrar treino</a>
 </header>
 
 <section class="stats-grid" aria-label="Resumo de hoje">

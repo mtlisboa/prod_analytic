@@ -1,10 +1,13 @@
 (() => {
-  const list = document.querySelector("#sets-list");
-  const modal = document.querySelector("#set-modal");
-  const trainingForm = document.querySelector("#training-form");
+  function initializeTrainingControls(root = document) {
+  const list = root.querySelector("#sets-list");
+  const modal = root.querySelector("#set-modal");
+  const trainingForm = root.querySelector("#training-form");
   if (!list || !modal) return;
-  const total = document.querySelector("#id_sets-TOTAL_FORMS");
-  const modalFields = document.querySelector("#modal-fields");
+  if (trainingForm?.dataset.trainingControlsInitialized === "true") return;
+  if (trainingForm) trainingForm.dataset.trainingControlsInitialized = "true";
+  const total = root.querySelector("#id_sets-TOTAL_FORMS");
+  const modalFields = root.querySelector("#modal-fields");
   const restTimerStates = new WeakMap();
   const executionTimerStates = new WeakMap();
   let activeCard = null;
@@ -165,9 +168,9 @@
     if (event.target.matches("[name$='-reps'], [name$='-partial_reps']")) validateReps();
   });
 
-  document.querySelector("#add-set").addEventListener("click", () => {
+  root.querySelector("#add-set").addEventListener("click", () => {
     const index = Number(total.value);
-    const html = document.querySelector("#empty-set-template").innerHTML.replaceAll("__prefix__", index);
+    const html = root.querySelector("#empty-set-template").innerHTML.replaceAll("__prefix__", index);
     list.insertAdjacentHTML("beforeend", html);
     total.value = index + 1;
     const card = list.lastElementChild;
@@ -198,4 +201,8 @@
 
   const firstInvalidCard = list.querySelector("[data-has-errors='true']");
   if (firstInvalidCard) open(firstInvalidCard);
+  }
+
+  window.FORGE_INIT_TRAINING_CONTROLS = initializeTrainingControls;
+  initializeTrainingControls();
 })();

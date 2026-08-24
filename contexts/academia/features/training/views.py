@@ -5,7 +5,6 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.utils import timezone
 
 from .forms import (
     TrainingRecordForm,
@@ -13,6 +12,7 @@ from .forms import (
     TrainingSetUpdateFormSet,
 )
 from .models import TrainingRecord
+from .modal import build_create_training_forms
 from .queries import HISTORY_PAGE_SIZE, training_history_queryset
 
 
@@ -72,24 +72,8 @@ def create_training(request):
         messages.info(request, "Cadastre seu primeiro exercício antes de registrar um treino.")
         return redirect("academia:exercise_create")
 
-    record = TrainingRecord(user=request.user)
-    form = TrainingRecordForm(request.POST or None, instance=record, user=request.user)
-    now = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
-    initial = [{
-        "position": 1,
-        "performed_at": now,
-        "reps": 0,
-        "partial_reps": 0,
-        "execution_time_seconds": 1,
-        "rest_time_seconds": 60,
-    }]
-    formset = TrainingSetCreateFormSet(
-        request.POST or None,
-        instance=record,
-        prefix="sets",
-        form_kwargs={"user": request.user},
-        initial=initial if request.method != "POST" else None,
-    )
+    data = request.POST if request.method == "POST" else None
+    record, form, formset = build_create_training_forms(request.user, data)
     if request.method == "POST":
         form_is_valid = form.is_valid()
         formset_is_valid = formset.is_valid()
@@ -104,7 +88,13 @@ def create_training(request):
             formset.instance = record
             formset.save()
         messages.success(request, "Treino registrado com sucesso.")
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": True, "record_id": record.pk})
         return redirect("academia:dashboard")
+    if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "academia/_training_form_content.html", {
+            "form": form, "formset": formset, "editing": False, "modal": True,
+        }, status=422)
     return render(request, "academia/training_form.html", {"form": form, "formset": formset, "editing": False})
 
 

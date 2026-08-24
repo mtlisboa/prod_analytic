@@ -21,13 +21,10 @@ class AcademiaSearchTests(TestCase):
 
     def test_catalog_searches_exercises_and_techniques_by_name(self):
         exercises = self.client.get(reverse("academia:exercise_list"), {"q": "supino"})
-        self.assertContains(exercises, "Supino reto")
-        self.assertNotContains(exercises, "Remada baixa")
-        self.assertNotContains(exercises, "Supino privado")
+        self.assertEqual([item.name for item in exercises.context["items"]], ["Supino reto"])
 
         techniques = self.client.get(reverse("academia:technique_list"), {"q": "drop"})
-        self.assertContains(techniques, "Drop set")
-        self.assertNotContains(techniques, "Rest pause")
+        self.assertEqual([item.name for item in techniques.context["items"]], ["Drop set"])
 
     def test_training_history_search_returns_matching_exercise_with_actions(self):
         for exercise in (self.supino, self.remada):
@@ -66,3 +63,43 @@ class AcademiaSearchTests(TestCase):
         response = self.client.get(reverse("academia:dashboard"))
         self.assertContains(response, "Supino reto")
         self.assertNotContains(response, "Remada baixa")
+
+    def test_academia_pages_expose_training_registration_as_modal(self):
+        response = self.client.get(reverse("academia:dashboard"))
+        self.assertContains(response, 'id="training-create-modal"')
+        self.assertContains(response, "data-training-modal-open")
+        self.assertContains(response, "data-training-modal-form")
+
+    def test_training_modal_submits_asynchronously_and_returns_validation(self):
+        performed_at = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
+        payload = {
+            "exercise": self.supino.pk,
+            "sets-TOTAL_FORMS": 1,
+            "sets-INITIAL_FORMS": 0,
+            "sets-MIN_NUM_FORMS": 1,
+            "sets-MAX_NUM_FORMS": 1000,
+            "sets-0-position": 1,
+            "sets-0-performed_at": performed_at,
+            "sets-0-weight_kg": "60.00",
+            "sets-0-reps": 10,
+            "sets-0-partial_reps": 0,
+            "sets-0-execution_time_seconds": 30,
+            "sets-0-rest_time_seconds": 60,
+            "sets-0-advanced_technique": "",
+            "sets-0-notes": "",
+        }
+        response = self.client.post(
+            reverse("academia:training_create"), payload,
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+        self.assertTrue(TrainingRecord.objects.filter(user=self.user, exercise=self.supino).exists())
+
+        payload["sets-0-weight_kg"] = ""
+        invalid = self.client.post(
+            reverse("academia:training_create"), payload,
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(invalid.status_code, 422)
+        self.assertContains(invalid, "O treino não foi salvo", status_code=422)

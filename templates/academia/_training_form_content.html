@@ -1,0 +1,34 @@
+<header class="page-heading{% if modal %} training-modal-heading{% endif %}">
+  <div><p class="eyebrow">{% if editing %}Editar registro{% else %}Novo registro{% endif %}</p><h1{% if modal %} id="training-modal-title"{% endif %}>{% if editing %}Editar treino{% else %}Como foi o treino?{% endif %}</h1><p>Escolha o exercício e registre execução, descanso e carga em cada série.</p></div>
+  <div class="heading-actions">{% if modal %}<button class="modal-close" type="button" data-training-modal-close aria-label="Fechar registro de treino">×</button>{% else %}<a class="button secondary" href="{% url 'academia:exercise_create' %}">+ Exercício</a><a class="button secondary" href="{% url 'academia:technique_create' %}">+ Técnica</a>{% endif %}</div>
+</header>
+<section class="panel form-panel{% if modal %} training-modal-form-panel{% endif %}">
+  <form method="post" action="{% if editing %}{% url 'academia:training_update' record.pk %}{% else %}{% url 'academia:training_create' %}{% endif %}" id="training-form"{% if modal %} data-training-modal-form{% endif %}>
+    {% csrf_token %}
+    {% if form.errors or formset.errors or formset.non_form_errors %}<div class="field-error formset-error" role="alert"><strong>O treino não foi salvo.</strong> Revise os campos destacados abaixo e tente novamente.</div>{% endif %}
+
+    <div class="field exercise-field" data-exercise-search-url="{% url 'academia:exercise_search' %}">
+      <label for="exercise-search">{{ form.exercise.label }}</label>{{ form.exercise }}
+      <div class="exercise-combobox"><input id="exercise-search" type="search" autocomplete="off" placeholder="Digite para buscar um exercício" aria-autocomplete="list" aria-controls="exercise-results" aria-expanded="false" required><div id="exercise-results" class="exercise-results" role="listbox" hidden></div></div>
+      <small>Digite parte do nome para pesquisar.</small>{% for error in form.exercise.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </div>
+
+    {{ formset.management_form }}{% if formset.non_form_errors %}<div class="field-error formset-error">{{ formset.non_form_errors }}</div>{% endif %}
+    <div class="sets-heading"><div><p class="eyebrow">Detalhamento</p><h2>Séries</h2></div><button class="button secondary" id="add-set" type="button">+ Adicionar série</button></div>
+    <div id="sets-list" class="sets-list">
+      {% for set_form in formset %}
+      <article class="set-card{% if set_form.errors %} has-errors{% endif %}" data-set-form{% if set_form.errors %} data-has-errors="true"{% endif %}>
+        <div><span class="set-number">Série {{ forloop.counter }}</span><strong data-summary>{% if set_form.errors %}Corrija os campos desta série{% else %}Preencha os dados da série{% endif %}</strong></div>
+        <div class="set-actions"><button class="input-tool edit-set" type="button">Editar</button><button class="input-tool danger remove-set" type="button">Remover</button></div>
+        {% for error in set_form.non_field_errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+        <div class="set-fields" hidden>{{ set_form.id }}{{ set_form.position }}{{ set_form.DELETE }}{% for field in set_form.visible_fields %}{% if field.name != "DELETE" %}<div class="field" data-field="{{ field.name }}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.name == "execution_time_seconds" %}<small>Preencha manualmente ou use o cronômetro.</small><div class="set-actions" data-execution-timer><strong data-execution-timer-display>00:00</strong><button class="input-tool" type="button" data-execution-timer-start>Iniciar</button><button class="input-tool" type="button" data-execution-timer-pause>Pausar</button><button class="input-tool" type="button" data-execution-timer-reset>Zerar</button></div>{% endif %}{% if field.name == "rest_time_seconds" %}<small>Preencha manualmente ou use o cronômetro.</small><div class="set-actions" data-rest-timer><strong data-rest-timer-display>00:00</strong><button class="input-tool" type="button" data-rest-timer-start>Iniciar</button><button class="input-tool" type="button" data-rest-timer-pause>Pausar</button><button class="input-tool" type="button" data-rest-timer-reset>Zerar</button></div>{% endif %}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endif %}{% endfor %}</div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <template id="empty-set-template"><article class="set-card" data-set-form><div><span class="set-number">Nova série</span><strong data-summary>Preencha os dados da série</strong></div><div class="set-actions"><button class="input-tool edit-set" type="button">Editar</button><button class="input-tool danger remove-set" type="button">Remover</button></div><div class="set-fields" hidden>{{ formset.empty_form.id }}{{ formset.empty_form.position }}{{ formset.empty_form.DELETE }}{% for field in formset.empty_form.visible_fields %}{% if field.name != "DELETE" %}<div class="field" data-field="{{ field.name }}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.name == "execution_time_seconds" %}<small>Preencha manualmente ou use o cronômetro.</small><div class="set-actions" data-execution-timer><strong data-execution-timer-display>00:00</strong><button class="input-tool" type="button" data-execution-timer-start>Iniciar</button><button class="input-tool" type="button" data-execution-timer-pause>Pausar</button><button class="input-tool" type="button" data-execution-timer-reset>Zerar</button></div>{% endif %}{% if field.name == "rest_time_seconds" %}<small>Preencha manualmente ou use o cronômetro.</small><div class="set-actions" data-rest-timer><strong data-rest-timer-display>00:00</strong><button class="input-tool" type="button" data-rest-timer-start>Iniciar</button><button class="input-tool" type="button" data-rest-timer-pause>Pausar</button><button class="input-tool" type="button" data-rest-timer-reset>Zerar</button></div>{% endif %}</div>{% endif %}{% endfor %}</div></article></template>
+
+    <div class="form-actions">{% if modal %}<button class="button secondary" type="button" data-training-modal-close>Cancelar</button>{% else %}<a class="button secondary" href="{% url 'academia:dashboard' %}">Cancelar</a>{% endif %}<button class="button primary" type="submit">{% if editing %}Salvar alterações{% else %}Registrar treino{% endif %}</button></div>
+    <dialog id="set-modal" class="set-modal"><div class="modal-heading"><div><p class="eyebrow">Editar detalhes</p><h2 id="modal-title">Série</h2></div><button type="button" class="modal-close" aria-label="Fechar">×</button></div><div id="modal-fields" class="form-grid"></div><div class="form-actions"><button class="button secondary modal-cancel" type="button">Cancelar</button><button class="button primary modal-save" type="button">Salvar série</button></div></dialog>
+  </form>
+</section>
